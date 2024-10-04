@@ -1,0 +1,2 @@
+letgo_bot
+-DPYTHON_EXECUTABLE=/usr/bin/python3.9 -DCATKIN_DEVEL_PREFIX=/home/kevin/kevin-auto-navi/devel -DCMAKE_INSTALL_PREFIX=/home/kevin/kevin-auto-navi/install -G Unix Makefiles

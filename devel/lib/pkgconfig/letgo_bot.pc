@@ -1,0 +1,8 @@
+prefix=/home/kevin/kevin-auto-navi/devel
+
+Name: letgo_bot
+Description: Description of letgo_bot
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
