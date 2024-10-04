@@ -11,10 +11,10 @@ class Value(nn.Module):
                                          network_config['value']['conv_layer']['kernel_size'], network_config['value']['conv_layer']['stride'])
         self.avg = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self.relu_fc1s = util.add_full_conns(len(network_config['value']['relu_full_conn_layer1']), network_config['value']['relu_full_conn_layer1'])
-        self.fc1s = util.add_full_conns(len(network_config['value']['full_conn_layer1']), network_config['value']['relu_full_conn_layer1'])
+        self.fc1s = util.add_full_conns(len(network_config['value']['full_conn_layer1']), network_config['value']['full_conn_layer1'])
         self.fc_embed = nn.Linear(nb_pstate, network_config['value']['embed_layer'])
         self.relu_fc2s = util.add_full_conns(len(network_config['value']['relu_full_conn_layer2']), network_config['value']['relu_full_conn_layer2'])
-        self.fc2s = util.add_full_conns(len(network_config['value']['full_conn_layer2']), network_config['value']['relu_full_conn_layer2'])
+        self.fc2s = util.add_full_conns(len(network_config['value']['full_conn_layer2']), network_config['value']['full_conn_layer2'])
 
         self.apply(util.init_weight)
 

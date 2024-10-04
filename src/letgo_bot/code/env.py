@@ -158,6 +158,44 @@ class Environment:
         done = False
         target = False
 
+        rospy.wait_for_service('/gazebo/unpause_physics')
+        try:
+            self.unpause()
+        except (rospy.ServiceException) as e:
+            print("/gazebo/unpause_physics service call failed")
+
+        time.sleep(0.1)
+
+        current_odom = None
+        while current_odom is None:
+            try:
+                current_odom = rospy.wait_for_message('/scout/odom', Odometry, timeout=0.1)
+            except:
+                pass
+
+        current_laser = None
+        while current_laser is None:
+            try:
+                current_laser = rospy.wait_for_message('/front_laser/scan', LaserScan, timeout=0.1)
+            except:
+                pass
+
+        current_camera_frames = None
+        while current_camera_frames is None:
+            try:
+                current_camera_frames = rospy.wait_for_message('/camera/fisheye/image_raw', Image, timeout=0.1)
+            except:
+                pass
+
+        time.sleep(0.1)
+        rospy.wait_for_service('/gazebo/pause_physics')
+        try:
+            pass
+            self.pause()
+        except rospy.ServiceException as e:
+            print("/gazebo/pause_physics service call failed")
+
+
         current_laser = self.current_laser
         current_odom = self.current_odom
         current_camera_frames = self.current_image_frame
@@ -189,18 +227,19 @@ class Environment:
         # Calculate the angle distance between the robots heading and heading toward the goal
         distance_x = self.goal_x - self.robot_x
         distance_y = self.goal_y - self.robot_y
-        beta = math.acos((distance_x * 1 + distance_y * 0) /
-                         (math.sqrt(math.pow(distance_x, 2) + math.pow(distance_y, 2))
-                          * math.pow(1, 2) + math.pow(0, 2)))
+        dot = skewX * 1 + skewY * 0
+        mag1 = math.sqrt(math.pow(distance_x, 2) + math.pow(distance_y, 2))
+        mag2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
+        beta = math.acos(dot / (mag1 * mag2))
 
         beta2 = beta - angle
-
         if beta2 > np.pi:
             beta2 = -np.pi * 2 + beta2
         if beta2 < -np.pi:
             beta2 = 2 * np.pi + beta2
 
         # Publish visual data in Rviz to display
+
         markerArray1 = MarkerArray()
         marker = Marker()
         marker.header.frame_id = "odom"

@@ -6,6 +6,7 @@ sys.path.append('/src/letgo_bot/code/')
 sys.path.append('/src/letgo_bot/launch/')
 
 import os
+from datetime import datetime
 import time
 import statistics
 import numpy as np
@@ -49,12 +50,12 @@ network_config2 = {
     },
     "value": {
         "conv_layer": {
-            "neutron_num": [[4, 16], [16, 64], [64, 256]],
+            "neutron_num": [[4, 64], [64, 256]],
             "kernel_size": 5,
             "stride": 2
         },
-        "rule_full_conn_layer_1": [[290, 128], [128, 32]],
-        "rule_full_conn_layer_2": [[290, 128], [128, 32]],
+        "rule_full_conn_layer_1": [[290, 64], [64, 32]],
+        "rule_full_conn_layer_2": [[290, 64], [64, 32]],
         "full_conn_layer_1": [[32, 2]],
         "full_conn_layer_2": [[32, 2]],
         "embed_layer": 32
@@ -67,7 +68,7 @@ network_config3 = {
         "embed_layer": 32,
         "mean_layer": 128,
         "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 128], [128, 128]],
+        "relu_full_conn_layer": [[32, 64], [64, 128], [128, 128]],
     },
     "value": {
         "conv_layer": {
@@ -75,8 +76,8 @@ network_config3 = {
             "kernel_size": 5,
             "stride": 2
         },
-        "rule_full_conn_layer_1": [[290, 128], [128, 32]],
-        "rule_full_conn_layer_2": [[290, 128], [128, 32]],
+        "rule_full_conn_layer_1": [[290, 128], [128, 64], [64, 32]],
+        "rule_full_conn_layer_2": [[290, 128], [128, 64], [64, 32]],
         "full_conn_layer_1": [[32, 2]],
         "full_conn_layer_2": [[32, 2]],
         "embed_layer": 32
@@ -85,11 +86,16 @@ network_config3 = {
 
 
 
-def evaluate(network, eval_episodes=10, epoch=0):
+def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=0):
     observations = deque(maxlen=4)
     env.collision = 0
     ep = 0
     avg_reward_list = []
+    txt = None
+    if mode == 'test':
+        txt = open ("test_doc/" + str(now) + "-evaluation-" + world + ".txt", "w+")
+        txt.writelines(str(network_config) + "\n")
+
     while ep < eval_episodes:
         count = 0
         obs, goal = env.reset()
@@ -136,10 +142,12 @@ def evaluate(network, eval_episodes=10, epoch=0):
         print("..............................................")
     reward = statistics.mean(avg_reward_list)
     col = env.collision
+    txt.writelines("average reward {}, over evaluation episodes {}, at epoch {}, collision {}".format(reward, eval_episodes, epoch, col))
     print("\n..............................................")
     print("Average Reward over %i Evaluation Episodes, At Epoch: %i, Avg Reward: %f, Collision No.: %i" % (
     eval_episodes, epoch, reward, col))
     print("..............................................")
+    txt.close()
     return reward
 
 
@@ -160,7 +168,7 @@ if __name__ == "__main__":
     model_name = 'navi'
 
     # reinforcement learning configuration
-    max_steps, max_episodes, batch_size = 2, 2, 32
+    max_steps, max_episodes, batch_size = 10, 10, 32
     actor_learn_rate, critic_learn_rate = 1e-3, 1e-3
     discount = 0.99
     soft_update_rate = 0.005
@@ -170,7 +178,7 @@ if __name__ == "__main__":
     save_interval = 2
     save_threshold = 0
     eval_threshold = 1
-    eval_ep = 2
+    eval_ep = 10
     save_models = True
 
     auto_tune = True
@@ -206,6 +214,8 @@ if __name__ == "__main__":
         os.makedirs("curves")
     if save_models and not os.path.exists("models"):
         os.makedirs("models")
+    if save_models and not os.path.exists("test_doc"):
+        os.makedirs("test_doc")
 
     util.set_seed(seed)
 
@@ -244,7 +254,11 @@ if __name__ == "__main__":
 
             total_timestep = 0
 
-
+            now = datetime.now()
+            txt = None
+            if mode == 'test':
+                txt = open ("test_doc/" + str(now) + "-test-" + world + ".txt", "w+")
+                txt.writelines(str(network_config) + "\n")
             # Begin the training loop
             for i in tqdm(range(0, max_episodes), ascii=True):
                 episode_reward = 0
@@ -277,7 +291,6 @@ if __name__ == "__main__":
                         if done:
                             print("Bad Initialization, skip this episode.")
                             break
-
                         continue
 
                     if done or timestep == max_steps - 1:
@@ -298,6 +311,9 @@ if __name__ == "__main__":
                         total_timestep += timestep
                         print('Robot: ', model_name, 'Episode:', episode, 'Step:', timestep, 'Total Steps:', total_timestep,
                               'R:', episode_reward, 'Overak R:', reward_mean_list[-1], 'Expert Batch:', np.int8(agent.batch_expert), 'Temperature:', agent.alpha, '\n')
+
+                        if mode == 'test':
+                            txt.writelines("test world: {}, episode: {}, steps: {}. reward: {}\n".format(world, episode, timestep, episode_reward))
 
                         if episode % save_interval == 0:
                             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name),
@@ -334,10 +350,11 @@ if __name__ == "__main__":
                     # Update the counters
                     state = next_state
                     camera_frames.append(s_)
+            txt.close()
 
             # After the training is done, evaluate the network and save it
             print('train finish, start evaluate.')
-            avg_reward = evaluate(agent, eval_ep, episode)
+            avg_reward = evaluate(agent, network_config, world, mode, now, eval_ep, episode)
             print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
             evaluations.append(avg_reward)
 
