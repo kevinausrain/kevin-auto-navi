@@ -7,11 +7,15 @@ from torch.distributions import Normal
 class Policy(nn.Module):
     def __init__(self, network_config, nb_actions, nb_pstate, action_space=None):
         super(Policy, self).__init__()
-
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.trans = util.add_vision_transformer((128, 160), (16, 20), 2, 32, 2048, 4,
                                                  network_config['policy']['transformer']['block'], network_config['policy']['transformer']['head'])
         self.fc_embed = nn.Linear(nb_pstate, network_config['policy']['embed_layer'])
-        self.relu_fcs = util.add_full_conns(len(network_config['policy']['relu_full_conn_layer']), network_config['policy']['relu_full_conn_layer'])
+
+        self.relu_fcs = nn.ModuleList()
+        util.add_full_conns(self.relu_fcs, len(network_config['policy']['relu_full_conn_layer']), network_config['policy']['relu_full_conn_layer'])
+
+
         self.mean_linear = nn.Linear(network_config['policy']['mean_layer'], nb_actions)
         self.log_std_linear = nn.Linear(network_config['policy']['log_std_layer'], nb_actions)
 
@@ -26,10 +30,8 @@ class Policy(nn.Module):
 
     def forward(self, current_state, goal):
         x1, x2 = current_state, goal
-
         x2 = self.fc_embed(x2)
         x = self.trans.forward(x1, x2)
-
         for relu_fc in self.relu_fcs:
             x = F.relu(relu_fc(x))
 

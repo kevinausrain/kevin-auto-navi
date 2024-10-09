@@ -17,7 +17,7 @@ class Agent(object):
                  block=2, head=4, automatic_entropy_tuning=True):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+      
         self.gamma = gamma
         self.tau = tau
         self.alpha = alpha
@@ -50,7 +50,7 @@ class Agent(object):
                                                   "act": {"shape": action_dim},
                                                   "goal_observe": {"shape": goal_dim},
                                                   "next_goal_observe": {"shape": goal_dim},
-                                                  "rew": {},
+                                                  "reward": {},
                                                   "next_observe": {"shape": (128, 160, 4)},
                                                   "engage": {},
                                                   "done": {}})
@@ -73,10 +73,12 @@ class Agent(object):
 
 
     def action(self, current_state, goal, evaluate=False):
-        current_state = state_preprocess(current_state, self.device)
-        goal = torch.FloatTensor(goal).float().unsqueeze(0).to(self.device) if current_state.ndim < 4 \
-            else torch.FloatTensor(goal).to(self.device)
-
+        if current_state.ndim < 4:
+            current_state = torch.FloatTensor(current_state).float().unsqueeze(0).permute(0, 3, 1, 2).to(self.device)
+            goal = torch.FloatTensor(goal).float().unsqueeze(0).to(self.device)
+        else:
+            current_state = torch.FloatTensor(current_state).float().permute(0, 3, 1, 2).to(self.device)
+            goal = torch.FloatTensor(goal).float().to(self.device)
         if evaluate is False:
             action, _, _ = self.policy.act(current_state, goal)
         else:

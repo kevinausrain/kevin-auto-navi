@@ -226,7 +226,7 @@ if __name__ == "__main__":
     for network_config in network_configs:
         for world in worlds:
             set_world_config(world)
-            env = Environment('/home/kevin/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
+            env = Environment('/home/drl_nav/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
 
             time.sleep(5)
 

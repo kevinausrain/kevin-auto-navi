@@ -44,24 +44,20 @@ def add_vision_transformer(image_size, patch_size, num_classes, dim, mlp_dim, ch
         heads=heads
     )
 
-def add_convs(max_layer_num, in_out_channels, kernel_size, stride):
-    convs = []
+def add_convs(layers, max_layer_num, in_out_channels, kernel_size, stride):
     for i in range(max_layer_num):
-        convs.append(nn.Conv2d(in_out_channels[i][0], in_out_channels[i][1], kernel_size=kernel_size, stride=stride))
-    return convs
+        layers.append(nn.Conv2d(in_out_channels[i][0], in_out_channels[i][1], kernel_size=kernel_size, stride=stride))
 
-def add_full_conns(max_layer_num, in_out_features):
-    fcs = []
+
+def add_full_conns(layers, max_layer_num, in_out_features):
     for i in range(max_layer_num):
-        fcs.append(nn.Linear(in_out_features[i][0], in_out_features[i][1]))
-    return fcs
+        layers.append(nn.Linear(in_out_features[i][0], in_out_features[i][1]))
 
 def state_preprocess(state, device):
-    order = [0, 3, 1, 2]
     if state.ndim < 4:
-         return torch.FloatTensor(state).float().unsqueeze(0).permute(order).to(device)
+         return torch.FloatTensor(state).float().unsqueeze(0).permute(0, 3, 1, 2).to(device)
     else:
-         return torch.FloatTensor(state).float().permute(order).to(device)
+         return torch.FloatTensor(state).float().permute(0, 3, 1, 2).to(device)
 
 
 def calculate_beta(cur_x, cur_y, goal_x, goal_y, angle):
