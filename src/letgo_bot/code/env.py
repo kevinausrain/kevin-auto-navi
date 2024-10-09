@@ -126,15 +126,12 @@ class Environment:
                         break
 
     def laser_callback(self, laser):
-        print('laser retrieved')
         self.current_laser = laser
 
     def odom_callback(self, odom):
-        print('odom retrieved')
         self.current_odom = odom
 
     def image_fish_callback(self, rgb_data):
-        print('fish retrieved')
         image = self.br.imgmsg_to_cv2(rgb_data, "mono8")
         self.current_image_frame = np.expand_dims(cv2.resize(image[80:400, 140:500], (160, 128)), axis=2)
 
@@ -169,7 +166,7 @@ class Environment:
             print("/gazebo/unpause_physics service call failed")
 
         time.sleep(0.1)
-        '''
+
         dataOdom = None
         while dataOdom is None:
             try:
@@ -192,7 +189,7 @@ class Environment:
                 data_obs_fish = rospy.wait_for_message('/camera/fisheye/image_raw', Image, timeout=0.1)
             except:
                 pass
-        '''
+
         time.sleep(0.1)
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
@@ -204,10 +201,6 @@ class Environment:
         current_laser = self.current_laser
         current_odom = self.current_odom
         current_camera_frames = self.current_image_frame
-
-        print('---------------------------------------------')
-        print(current_odom)
-        print('---------------------------------------------')
 
         # cloud point
         velodyne_state = []
@@ -234,8 +227,6 @@ class Environment:
 
         # Publish visual data in Rviz to display
         util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.publisher4, act, self.goal_x, self.goal_y)
-        print('published')
-
 
         # reward calculation
         reward_heuristic = (self.distance - distance) * 20

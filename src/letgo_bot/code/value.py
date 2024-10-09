@@ -26,9 +26,8 @@ class Value(nn.Module):
 
         self.apply(util.init_weight)
 
-    def forward(self, cur_state, goal_state, next_action):
-        x1 = cur_state
-        x1 = x1.to(self.device)
+    def forward(self, current_state, goal_state, next_action):
+        x1 = current_state
         for conv in self.relu_convs:
             x1 = F.relu(conv(x1))
 

@@ -168,14 +168,14 @@ if __name__ == "__main__":
     model_name = 'navi'
 
     # reinforcement learning configuration
-    max_steps, max_episodes, batch_size = 10, 10, 32
+    max_steps, max_episodes, batch_size = 500, 100, 32
     actor_learn_rate, critic_learn_rate = 1e-3, 1e-3
     discount = 0.99
     soft_update_rate = 0.005
     buffer_size = 5000
 
     # Evaluation
-    save_interval = 2
+    save_interval = 50
     save_threshold = 0
     eval_threshold = 1
     eval_ep = 10
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     mode = ""
     worlds = []
     network_configs = []
-    load = None
+    pth_name = None
 
     for i in range(len(sys.argv)):
         if sys.argv[i] == "--mode":
@@ -201,12 +201,10 @@ if __name__ == "__main__":
         if sys.argv[i] == "--world":
             worlds = str(sys.argv[i + 1]).split("/")
         if sys.argv[i] == "--load":
-            load = str(sys.argv[i + 1])
+            pth_name = str(sys.argv[i + 1])
 
     if mode == 'test':
         network_configs.append(network_config1)
-        network_configs.append(network_config2)
-        network_configs.append(network_config3)
     if mode == 'train':
         network_configs.append(network_config1)
 
@@ -240,8 +238,9 @@ if __name__ == "__main__":
                           buffer_size, soft_update_rate, discount, alpha, block=2,
                           head=4, automatic_entropy_tuning=auto_tune)
 
-            if load is not None:
-                agent.load(load)
+            if pth_name is not None:
+                agent.load(directory="models", filename=pth_name)
+                print('load success')
 
             # Create evaluation data store
             evaluations = []
@@ -288,6 +287,7 @@ if __name__ == "__main__":
                 initial_state = np.concatenate((camera_frames[-4], camera_frames[-3], camera_frames[-2], camera_frames[-1]), axis=-1)
 
                 for timestep in range(max_steps):
+                    print(timestep)
                     if timestep == 0:
                         # get action from current state based on agent's policy network
                         action = agent.action(np.array(initial_state), np.array(goal[:2])).clip(-max_action, max_action)
@@ -341,6 +341,10 @@ if __name__ == "__main__":
                     last_goal = goal
                     camera_frame, r_heuristic, r_action, r_freeze, r_collision, r_target, reward, done, goal, target = env.step(action_taken, timestep)
 
+                    if r_collision == -100 and timestep >= 50:
+                        print("Collision")
+                        done = True
+
                     episode_reward += reward
                     episode_heuristic_reward += r_heuristic
                     episode_action_reward += r_action
@@ -368,9 +372,9 @@ if __name__ == "__main__":
             print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
             evaluations.append(avg_reward)
 
-            agent.save(model_name, directory="models", reward=int(np.floor(avg_reward)), seed=seed)
+            agent.save(str(now) + "-" + str(model_name) + "-", directory="models", reward=int(np.floor(avg_reward)), seed=seed)
 
-            print('avg_reward is a{}, threshold is {}'.format(avg_reward, save_threshold))
+            print('avg_reward is {}, threshold is {}'.format(avg_reward, save_threshold))
 
             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name), reward_mean_list,
                     allow_pickle=True, fix_imports=True)
