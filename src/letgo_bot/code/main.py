@@ -367,12 +367,14 @@ if __name__ == "__main__":
             txt.close()
 
             # After the training is done, evaluate the network and save it
+            agent.save(str(now) + "-" + str(model_name) + "-", directory="models", reward=int(np.floor(1)), seed=seed)
+
             print('train finish, start evaluate.')
             avg_reward = evaluate(agent, network_config, world, mode, now, eval_ep, episode)
             print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
             evaluations.append(avg_reward)
 
-            agent.save(str(now) + "-" + str(model_name) + "-", directory="models", reward=int(np.floor(avg_reward)), seed=seed)
+
 
             print('avg_reward is {}, threshold is {}'.format(avg_reward, save_threshold))
 
