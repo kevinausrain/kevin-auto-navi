@@ -110,8 +110,8 @@ def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=
         while not done and count < max_steps:
 
             if count == 0:
-                action = network.action(np.array(state), np.array(goal[:2]), evaluate=True).clip(-max_action, max_action)
-                a_in = [(action[0] + 1) * linear_cmd_scale, action[1] * angular_cmd_scale]
+                action = network.action(np.array(initial_state), np.array(goal[:2]), evaluate=True).clip(-max_action, max_action)
+                a_in = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
                 obs_, _, _, _, _, _, _, done, goal, target = env.step(a_in, timestep)
                 observation = np.concatenate((obs_, obs_, obs_, obs_), axis=-1)
 
@@ -128,7 +128,7 @@ def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=
 
             act = network.action(np.array(observation), np.array(goal[:2]), evaluate=True).clip(-max_action,
                                                                                                        max_action)
-            a_in = [(act[0] + 1) * linear_cmd_scale, act[1] * angular_cmd_scale]
+            a_in = [(act[0] + 1) * linear_scalar, act[1] * angular_scalar]
             obs_, _, _, _, _, _, reward, done, goal, target = env.step(a_in, count)
             avg_reward += reward
             observation = np.concatenate((observations[-3], observations[-2], observations[-1], obs_), axis=-1)
@@ -187,8 +187,8 @@ if __name__ == "__main__":
 
     seed = 525
     robot = 'navi'
-    linear_cmd_scale = 0.5
-    angular_cmd_scale = 2
+    linear_scalar = 0.5
+    angular_scalar = 2
 
     mode = ""
     worlds = []
@@ -225,10 +225,10 @@ if __name__ == "__main__":
             env = Environment('/home/kevin/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
 
             time.sleep(5)
-            env.seed(seed)
 
-            state, goal = env.reset()
-            state_dim = state.shape
+            env.seed(seed)
+            initial_state, goal = env.reset()
+            state_dim = initial_state.shape
             max_action = 1
 
             # Initialize the agent
@@ -249,50 +249,55 @@ if __name__ == "__main__":
             reward_collision_list = []
             reward_mean_list = []
 
-            pedal_list = []
-            steering_list = []
+            linear_move_list = []
+            angular_move_list = []
 
             total_timestep = 0
 
             now = datetime.now()
+
+            # record training data
             txt = None
             if mode == 'test':
                 txt = open ("test_doc/" + str(now) + "-test-" + world + ".txt", "w+")
                 txt.writelines(str(network_config) + "\n")
+
             # Begin the training loop
             for i in tqdm(range(0, max_episodes), ascii=True):
                 episode_reward = 0
-                episode_heu_reward = 0.0
-                episode_act_reward = 0.0
-                episode_tar_reward = 0.0
-                episode_col_reward = 0.0
-                episode_fr_reward = 0.0
+                episode_heuristic_reward = 0.0
+                episode_action_reward = 0.0
+                episode_target_reward = 0.0
+                episode_collision_reward = 0.0
+                episode_freeze_reward = 0.0
 
                 camera_frames = deque(maxlen=4)
-                s, goal = env.reset()
+                initial_camera_frame, goal = env.reset()
 
                 for i in range(4):
-                    camera_frames.append(s)
+                    camera_frames.append(initial_camera_frame)
 
                 # current state is described by four frames taken by camera
-                state = np.concatenate((camera_frames[-4], camera_frames[-3], camera_frames[-2], camera_frames[-1]), axis=-1)
+                initial_state = np.concatenate((camera_frames[-4], camera_frames[-3], camera_frames[-2], camera_frames[-1]), axis=-1)
 
                 for timestep in range(max_steps):
                     if timestep == 0:
-                        action = agent.action(np.array(state), np.array(goal[:2])).clip(-max_action, max_action)
-                        a_in = [(action[0] + 1) * linear_cmd_scale, action[1] * angular_cmd_scale]
+                        # get action from current state based on agent's policy network
+                        action = agent.action(np.array(initial_state), np.array(goal[:2])).clip(-max_action, max_action)
+                        action_taken = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
                         last_goal = goal
-                        s_, _, _, _, _, _, reward, done, goal, target = env.step(a_in, timestep)
-                        state = np.concatenate((s_, s_, s_, s_), axis=-1)
+                        camera_frame, _, _, _, _, _, reward, done, goal, target = env.step(action_taken, timestep)
+                        initial_state = np.concatenate((camera_frame, camera_frame, camera_frame, camera_frame), axis=-1)
 
                         for i in range(4):
-                            camera_frames.append(s_)
+                            camera_frames.append(camera_frame)
 
                         if done:
                             print("Bad Initialization, skip this episode.")
                             break
                         continue
 
+                    # if this episode finish
                     if done or timestep == max_steps - 1:
                         episode += 1
 
@@ -300,17 +305,15 @@ if __name__ == "__main__":
 
                         reward_list.append(episode_reward)
                         reward_mean_list.append(np.mean(reward_list[-20:]))
-                        reward_heuristic_list.append(episode_heu_reward)
-                        reward_action_list.append(episode_act_reward)
-                        reward_target_list.append(episode_tar_reward)
-                        reward_collision_list.append(episode_col_reward)
-                        reward_freeze_list.append(episode_fr_reward)
+                        reward_heuristic_list.append(episode_heuristic_reward)
+                        reward_action_list.append(episode_action_reward)
+                        reward_target_list.append(episode_target_reward)
+                        reward_collision_list.append(episode_collision_reward)
+                        reward_freeze_list.append(episode_freeze_reward)
 
-                        pedal_list.clear()
-                        steering_list.clear()
+                        linear_move_list.clear()
+                        angular_move_list.clear()
                         total_timestep += timestep
-                        print('Robot: ', model_name, 'Episode:', episode, 'Step:', timestep, 'Total Steps:', total_timestep,
-                              'R:', episode_reward, 'Overak R:', reward_mean_list[-1], 'Expert Batch:', np.int8(agent.batch_expert), 'Temperature:', agent.alpha, '\n')
 
                         if mode == 'test':
                             txt.writelines("test world: {}, episode: {}, steps: {}. reward: {}\n".format(world, episode, timestep, episode_reward))
@@ -322,34 +325,34 @@ if __name__ == "__main__":
                         break
 
 
-                    action = agent.action(np.array(state), np.array(goal[:2])).clip(-max_action, max_action)
+                    action = agent.action(np.array(initial_state), np.array(goal[:2])).clip(-max_action, max_action)
                     action_exp = None
-                    a_in = [(action[0] + 1) * linear_cmd_scale, action[1] * angular_cmd_scale]
-                    pedal_list.append(round((action[0] + 1) / 2, 2))
-                    steering_list.append(round(action[1], 2))
+                    action_taken = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
+                    linear_move_list.append(round((action[0] + 1) / 2, 2))
+                    angular_move_list.append(round(action[1], 2))
 
                     last_goal = goal
-                    s_, r_h, r_a, r_f, r_c, r_t, reward, done, goal, target = env.step(a_in, timestep)
+                    camera_frame, r_heuristic, r_action, r_freeze, r_collision, r_target, reward, done, goal, target = env.step(action_taken, timestep)
 
                     episode_reward += reward
-                    episode_heu_reward += r_h
-                    episode_act_reward += r_a
-                    episode_fr_reward += r_f
-                    episode_col_reward += r_c
-                    episode_tar_reward += r_t
+                    episode_heuristic_reward += r_heuristic
+                    episode_action_reward += r_action
+                    episode_freeze_reward += r_freeze
+                    episode_collision_reward += r_collision
+                    episode_target_reward += r_target
 
-                    next_state = np.concatenate((camera_frames[-3], camera_frames[-2], camera_frames[-1], s_), axis=-1)
+                    next_state = np.concatenate((camera_frames[-3], camera_frames[-2], camera_frames[-1], camera_frame), axis=-1)
 
-                    # Save the tuple in replay buffer
-                    agent.store_transition(state, action, last_goal[:2], goal[:2], reward, next_state, 0, action_exp,
+                    # Save states in replay buffer
+                    agent.store_transition(initial_state, action, last_goal[:2], goal[:2], reward, next_state, 0, action_exp,
                                            done)
 
                     # Train the SAC model
                     agent.learn(batch_size)
 
                     # Update the counters
-                    state = next_state
-                    camera_frames.append(s_)
+                    initial_state = next_state
+                    camera_frames.append(camera_frame)
             txt.close()
 
             # After the training is done, evaluate the network and save it

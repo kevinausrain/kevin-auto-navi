@@ -18,10 +18,8 @@ class Value(nn.Module):
 
         self.apply(util.init_weight)
 
-    def forward(self, inp):
-        istate, pstate, a = inp
-
-        x1 = istate
+    def forward(self, cur_state, goal_state, next_action):
+        x1 = cur_state
 
         for conv in self.relu_convs:
             x1 = F.relu(conv(x1))
@@ -29,10 +27,10 @@ class Value(nn.Module):
         x1 = self.avg(x1)
         x1 = x1.view(x1.size(0), -1)
 
-        x2 = pstate
+        x2 = goal_state
         x2 = F.relu(self.fc_embed(x2))
 
-        x = torch.cat([x1, x2, a], dim=1)
+        x = torch.cat([x1, x2, next_action], dim=1)
         q1, q2 = x, x
 
         for relu_fc in self.relu_fc1s:

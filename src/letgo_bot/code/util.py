@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 from ViT import VisionTransformer
+import math
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -52,4 +55,85 @@ def add_full_conns(max_layer_num, in_out_features):
     for i in range(max_layer_num):
         fcs.append(nn.Linear(in_out_features[i][0], in_out_features[i][1]))
     return fcs
+
+def state_preprocess(state, device):
+    order = [0, 3, 1, 2]
+    if state.ndim < 4:
+         return torch.FloatTensor(state).float().unsqueeze(0).permute(order).to(device)
+    else:
+         return torch.FloatTensor(state).float().permute(order).to(device)
+
+
+def calculate_beta(cur_x, cur_y, goal_x, goal_y, angle):
+    # Calculate the angle distance between the robots heading and heading toward the goal
+    distance_x = goal_x - cur_x
+    distance_y = goal_y - cur_y
+    dot = distance_x * 1 + distance_y * 0
+    mag1 = math.sqrt(math.pow(distance_x, 2) + math.pow(distance_y, 2))
+    mag2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
+    beta = math.acos(dot / (mag1 * mag2))
+
+    beta2 = beta - angle
+    if beta2 > np.pi:
+        beta2 = -np.pi * 2 + beta2
+    if beta2 < -np.pi:
+        beta2 = 2 * np.pi + beta2
+
+    return beta2
+
+def display_move_in_rviz(goal_publisher, linear_speed_publisher, angular_speed_publisher, publisher4, act, goal_x, goal_y):
+    goal_marker_array = MarkerArray()
+    goal_marker = Marker()
+    goal_marker.header.frame_id = "odom"
+    goal_marker.type, goal_marker.action = Marker.CYLINDER, Marker.CYLINDER
+    goal_marker.scale.x, goal_marker.scale.y, goal_marker.scale.z = 0.3, 0.01, 1.0
+    goal_marker.color.a, goal_marker.color.r, goal_marker.color.g, goal_marker.color.b = 1.0, 1.0, 1.0, 1.0
+    goal_marker.pose.orientation.w = 1.0
+    goal_marker.pose.position.x, goal_marker.pose.position.y, goal_marker.pose.position.z = goal_x, goal_y, 0
+    goal_marker_array.markers.append(goal_marker)
+    goal_publisher.publish(goal_marker_array)
+
+    linear_speed_marker_array = MarkerArray()
+    linear_speed_marker = Marker()
+    linear_speed_marker.header.frame_id = "odom"
+    linear_speed_marker.type, linear_speed_marker.action = Marker.CUBE, Marker.ADD
+    linear_speed_marker.scale.x, linear_speed_marker.scale.y, linear_speed_marker.scale.z = abs(act[0]), 0.1, 0.01
+    linear_speed_marker.color.a, linear_speed_marker.color.r, linear_speed_marker.color.g, linear_speed_marker.color.b = 1.0, 1.0, 0.0, 0.0
+    linear_speed_marker.pose.orientation.w = 1.0
+    linear_speed_marker.pose.position.x, linear_speed_marker.pose.position.y, linear_speed_marker.pose.position.y = 5, 0, 0
+    linear_speed_marker_array.markers.append(linear_speed_marker)
+    linear_speed_publisher.publish(linear_speed_marker_array)
+
+    angular_speed_marker_array = MarkerArray()
+    angular_speed_marker = Marker()
+    angular_speed_marker.header.frame_id = "odom"
+    angular_speed_marker.type, angular_speed_marker.action = Marker.CUBE, Marker.ADD
+    angular_speed_marker.scale.x, angular_speed_marker.scale.y, angular_speed_marker.scale.z = abs(act[1]), 0.1, 0.01
+    angular_speed_marker.color.a, angular_speed_marker.color.r, angular_speed_marker.color.g, angular_speed_marker.color.b = 1.0, 1.0, 0.0, 0.0
+    angular_speed_marker.pose.orientation.w = 1.0
+    angular_speed_marker.pose.position.x, angular_speed_marker.pose.position.y, angular_speed_marker.pose.position.z = 5, 0.2, 0
+    angular_speed_marker_array.markers.append(angular_speed_marker)
+    angular_speed_publisher.publish(angular_speed_marker_array)
+
+
+    markerArray4 = MarkerArray()
+    marker4 = Marker()
+    marker4.header.frame_id = "odom"
+    marker4.type = Marker.CUBE
+    marker4.action = Marker.ADD
+    marker4.scale.x = 0.1
+    marker4.scale.y = 0.1
+    marker4.scale.z = 0.01
+    marker4.color.a = 1.0
+    marker4.color.r = 1.0
+    marker4.color.g = 0.0
+    marker4.color.b = 0.0
+    marker4.pose.orientation.w = 1.0
+    marker4.pose.position.x = 5
+    marker4.pose.position.y = 0.4
+    marker4.pose.position.z = 0
+
+    markerArray4.markers.append(marker4)
+    publisher4.publish(markerArray4)
+
 

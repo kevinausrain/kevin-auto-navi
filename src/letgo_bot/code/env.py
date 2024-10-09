@@ -14,6 +14,7 @@ from cv_bridge import CvBridge
 
 import rospy
 import subprocess
+import util
 from std_srvs.srv import Empty
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
@@ -65,6 +66,7 @@ class Environment:
 
         self.distance = math.sqrt(math.pow(self.robot_x - self.goal_x, 2) + math.pow(self.robot_y - self.goal_y, 2))
         self.gaps = [[-1.6, -np.pi + np.pi / 20]]
+
         for m in range(19):
             self.gaps.append([self.gaps[m][1], self.gaps[m][1] + np.pi / 20])
         self.gaps[-1][-1] += 0.03
@@ -91,10 +93,9 @@ class Environment:
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        # todo: publish visual data for Rviz to display
-        self.publisher1 = rospy.Publisher('vis_mark_array1', MarkerArray, queue_size=3)
-        self.publisher2 = rospy.Publisher('vis_mark_array2', MarkerArray, queue_size=1)
-        self.publisher3 = rospy.Publisher('vis_mark_array3', MarkerArray, queue_size=1)
+        self.goal_publisher = rospy.Publisher('goal_marker_array', MarkerArray, queue_size=3)
+        self.linear_speed_publisher = rospy.Publisher('linear_marker_array', MarkerArray, queue_size=1)
+        self.angular_speed_publisher = rospy.Publisher('angular_marker_array', MarkerArray, queue_size=1)
         self.publisher4 = rospy.Publisher('vis_mark_array4', MarkerArray, queue_size=1)
 
         # receive sensor (laser/camera/pointcloud) data to observe environment
@@ -164,33 +165,10 @@ class Environment:
         except (rospy.ServiceException) as e:
             print("/gazebo/unpause_physics service call failed")
 
-        time.sleep(0.1)
+        time.sleep(0.2)
 
-        current_odom = None
-        while current_odom is None:
-            try:
-                current_odom = rospy.wait_for_message('/scout/odom', Odometry, timeout=0.1)
-            except:
-                pass
-
-        current_laser = None
-        while current_laser is None:
-            try:
-                current_laser = rospy.wait_for_message('/front_laser/scan', LaserScan, timeout=0.1)
-            except:
-                pass
-
-        current_camera_frames = None
-        while current_camera_frames is None:
-            try:
-                current_camera_frames = rospy.wait_for_message('/camera/fisheye/image_raw', Image, timeout=0.1)
-            except:
-                pass
-
-        time.sleep(0.1)
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
-            pass
             self.pause()
         except rospy.ServiceException as e:
             print("/gazebo/pause_physics service call failed")
@@ -199,6 +177,10 @@ class Environment:
         current_laser = self.current_laser
         current_odom = self.current_odom
         current_camera_frames = self.current_image_frame
+
+        print('---------------------------------------------')
+        print(current_odom)
+        print('---------------------------------------------')
 
         # cloud point
         velodyne_state = []
@@ -218,99 +200,15 @@ class Environment:
             current_odom.pose.pose.orientation.y,
             current_odom.pose.pose.orientation.z
         )
-        euler = quaternion.to_euler(degrees=False)
-        angle = round(euler[2], 4)
 
         # Calculate distance to the goal from the robot
         distance = math.sqrt(math.pow(self.robot_x - self.goal_x, 2) + math.pow(self.robot_y - self.goal_y, 2))
-
-        # Calculate the angle distance between the robots heading and heading toward the goal
-        distance_x = self.goal_x - self.robot_x
-        distance_y = self.goal_y - self.robot_y
-        dot = skewX * 1 + skewY * 0
-        mag1 = math.sqrt(math.pow(distance_x, 2) + math.pow(distance_y, 2))
-        mag2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
-        beta = math.acos(dot / (mag1 * mag2))
-
-        beta2 = beta - angle
-        if beta2 > np.pi:
-            beta2 = -np.pi * 2 + beta2
-        if beta2 < -np.pi:
-            beta2 = 2 * np.pi + beta2
+        beta2 = util.calculate_beta(self.robot_x, self.robot_y, self.goal_x, self.goal_y, round(quaternion.to_euler(degrees=False)[2], 4))
 
         # Publish visual data in Rviz to display
+        util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.publisher4, act, self.goal_x, self.goal_y)
+        print('published')
 
-        markerArray1 = MarkerArray()
-        marker = Marker()
-        marker.header.frame_id = "odom"
-        marker.type, marker.action = marker.CYLINDER, marker.ADD
-        marker.scale.x, marker.scale.y, marker.scale.z  = 0.3, 0.01, 1.0
-        marker.color.a, marker.color.r, marker.color.g, marker.color.b = 1.0, 1.0, 1.0, 1.0
-        marker.pose.orientation.w = 1.0
-        marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = self.goal_x, self.goal_y, 0
-
-        markerArray1.markers.append(marker)
-        self.publisher1.publish(markerArray1)
-
-        markerArray2 = MarkerArray()
-        marker2 = Marker()
-        marker2.header.frame_id = "odom"
-        marker2.type = marker.CUBE
-        marker2.action = marker.ADD
-        marker2.scale.x = abs(act[0])
-        marker2.scale.y = 0.1
-        marker2.scale.z = 0.01
-        marker2.color.a = 1.0
-        marker2.color.r = 1.0
-        marker2.color.g = 0.0
-        marker2.color.b = 0.0
-        marker2.pose.orientation.w = 1.0
-        marker2.pose.position.x = 5
-        marker2.pose.position.y = 0
-        marker2.pose.position.z = 0
-
-        markerArray2.markers.append(marker2)
-        self.publisher2.publish(markerArray2)
-
-        markerArray3 = MarkerArray()
-        marker3 = Marker()
-        marker3.header.frame_id = "odom"
-        marker3.type = marker.CUBE
-        marker3.action = marker.ADD
-        marker3.scale.x = abs(act[1])
-        marker3.scale.y = 0.1
-        marker3.scale.z = 0.01
-        marker3.color.a = 1.0
-        marker3.color.r = 1.0
-        marker3.color.g = 0.0
-        marker3.color.b = 0.0
-        marker3.pose.orientation.w = 1.0
-        marker3.pose.position.x = 5
-        marker3.pose.position.y = 0.2
-        marker3.pose.position.z = 0
-
-        markerArray3.markers.append(marker3)
-        self.publisher3.publish(markerArray3)
-
-        markerArray4 = MarkerArray()
-        marker4 = Marker()
-        marker4.header.frame_id = "odom"
-        marker4.type = marker.CUBE
-        marker4.action = marker.ADD
-        marker4.scale.x = 0.1
-        marker4.scale.y = 0.1
-        marker4.scale.z = 0.01
-        marker4.color.a = 1.0
-        marker4.color.r = 1.0
-        marker4.color.g = 0.0
-        marker4.color.b = 0.0
-        marker4.pose.orientation.w = 1.0
-        marker4.pose.position.x = 5
-        marker4.pose.position.y = 0.4
-        marker4.pose.position.z = 0
-
-        markerArray4.markers.append(marker4)
-        self.publisher4.publish(markerArray4)
 
         # reward calculation
         reward_heuristic = (self.distance - distance) * 20
@@ -376,6 +274,7 @@ class Environment:
         object_state.pose.position.x, object_state.pose.position.y = x, y
         object_state.pose.orientation.x, object_state.pose.orientation.y, object_state.pose.orientation.z, object_state.pose.orientation.w = (
             quaternion.x, quaternion.y, quaternion.z, quaternion.w)
+
         self.set_state.publish(object_state)
         self.robot_x, self.robot_y = object_state.pose.position.x, object_state.pose.position.y
 
@@ -415,29 +314,7 @@ class Environment:
             print("/gazebo/pause_physics service call failed")
 
         distance = math.sqrt(math.pow(self.robot_x - self.goal_x, 2) + math.pow(self.robot_y - self.goal_y, 2))
-
-        skewX = self.goal_x - self.robot_x
-        skewY = self.goal_y - self.robot_y
-
-        dot = skewX * 1 + skewY * 0
-        mag1 = math.sqrt(math.pow(skewX, 2) + math.pow(skewY, 2))
-        mag2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
-        beta = math.acos(dot / (mag1 * mag2))
-
-        if skewY < 0:
-            if skewX < 0:
-                beta = -beta
-            else:
-                beta = 0 - beta
-        beta2 = (beta - angle)
-
-        if beta2 > np.pi:
-            beta2 = np.pi - beta2
-            beta2 = -np.pi - beta2
-        if beta2 < -np.pi:
-            beta2 = -np.pi - beta2
-            beta2 = np.pi - beta2
-
+        beta2 = util.calculate_beta(self.robot_x, self.robot_y, self.goal_x, self.goal_y, angle)
         beta2 = beta2 / np.pi
         goal = np.array([distance, beta2, 0.0, 0.0])
         return state, goal

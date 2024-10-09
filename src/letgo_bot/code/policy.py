@@ -24,9 +24,8 @@ class Policy(nn.Module):
             self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2.)
             self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2.)
 
-    def forward(self, inp):
-        istate, pstate = inp
-        x1, x2 = istate, pstate
+    def forward(self, current_state, goal):
+        x1, x2 = current_state, goal
 
         x2 = self.fc_embed(x2)
         x = self.trans.forward(x1, x2)
@@ -40,8 +39,8 @@ class Policy(nn.Module):
 
         return mean, std
 
-    def act(self, inp):
-        mean, std = self.forward(inp)
+    def act(self, current_state, goal):
+        mean, std = self.forward(current_state, goal)
         normal = Normal(mean, std)
         x = normal.rsample()
         y = torch.tanh(x)
