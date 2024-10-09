@@ -126,12 +126,15 @@ class Environment:
                         break
 
     def laser_callback(self, laser):
+        print('laser retrieved')
         self.current_laser = laser
 
     def odom_callback(self, odom):
+        print('odom retrieved')
         self.current_odom = odom
 
     def image_fish_callback(self, rgb_data):
+        print('fish retrieved')
         image = self.br.imgmsg_to_cv2(rgb_data, "mono8")
         self.current_image_frame = np.expand_dims(cv2.resize(image[80:400, 140:500], (160, 128)), axis=2)
 
@@ -165,8 +168,32 @@ class Environment:
         except (rospy.ServiceException) as e:
             print("/gazebo/unpause_physics service call failed")
 
-        time.sleep(0.2)
+        time.sleep(0.1)
+        '''
+        dataOdom = None
+        while dataOdom is None:
+            try:
+                dataOdom = rospy.wait_for_message('/navi/odom', Odometry, timeout=0.1)
+            except:
+                pass
 
+        data = None
+        while data is None:
+            try:
+                data = rospy.wait_for_message('/front_laser/scan', LaserScan, timeout=0.1)
+            except:
+                pass
+
+        data_obs = None
+
+        data_obs_fish = None
+        while data_obs_fish is None:
+            try:
+                data_obs_fish = rospy.wait_for_message('/camera/fisheye/image_raw', Image, timeout=0.1)
+            except:
+                pass
+        '''
+        time.sleep(0.1)
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
             self.pause()

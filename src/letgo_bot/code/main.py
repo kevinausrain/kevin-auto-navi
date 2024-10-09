@@ -193,12 +193,15 @@ if __name__ == "__main__":
     mode = ""
     worlds = []
     network_configs = []
+    load = None
 
     for i in range(len(sys.argv)):
         if sys.argv[i] == "--mode":
             mode = str(sys.argv[i + 1])
         if sys.argv[i] == "--world":
             worlds = str(sys.argv[i + 1]).split("/")
+        if sys.argv[i] == "--load":
+            load = str(sys.argv[i + 1])
 
     if mode == 'test':
         network_configs.append(network_config1)
@@ -206,6 +209,7 @@ if __name__ == "__main__":
         network_configs.append(network_config3)
     if mode == 'train':
         network_configs.append(network_config1)
+
 
 
     if not os.path.exists("results"):
@@ -235,6 +239,9 @@ if __name__ == "__main__":
             agent = Agent(2, 2, seed, network_config, critic_learn_rate, actor_learn_rate, lr_alpha,
                           buffer_size, soft_update_rate, discount, alpha, block=2,
                           head=4, automatic_entropy_tuning=auto_tune)
+
+            if load is not None:
+                agent.load(load)
 
             # Create evaluation data store
             evaluations = []
@@ -361,8 +368,9 @@ if __name__ == "__main__":
             print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
             evaluations.append(avg_reward)
 
-            if avg_reward > save_threshold:
-                agent.save(model_name, directory="models", reward=int(np.floor(avg_reward)), seed=seed)
+            agent.save(model_name, directory="models", reward=int(np.floor(avg_reward)), seed=seed)
+
+            print('avg_reward is a{}, threshold is {}'.format(avg_reward, save_threshold))
 
             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name), reward_mean_list,
                     allow_pickle=True, fix_imports=True)

@@ -133,9 +133,12 @@ class Agent(object):
     def save(self, filename, directory, reward, seed):
         torch.save(self.policy.state_dict(), '%s/%s_reward%s_seed%s_actor.pth' % (directory, filename, reward, seed))
         torch.save(self.critic.state_dict(), '%s/%s_reward%s_seed%s_critic.pth' % (directory, filename, reward, seed))
+        torch.save(self.critic_target.state_dict(), '%s/%s_reward%s_seed%s_critic.pth' % (directory, filename, reward, seed))
 
     def load(self, directory, filename):
         self.policy.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
+        self.policy.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
+        self.policy.load_state_dict(torch.load('%s/%s_critic_target.pth' % (directory, filename)))
 
     def store_transition(self, state, action, goal, next_goal, reward, next_state, engage, action_expert, done=0):
         self.replay_buffer.add(observe=state,
