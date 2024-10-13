@@ -9,7 +9,6 @@ from util import hard_update, soft_update, set_seed, state_preprocess
 from value import Value
 from policy import Policy
 
-
 # decision-making agent
 class Agent(object):
     def __init__(self, action_dim, goal_dim, seed, network_config,
@@ -62,7 +61,6 @@ class Agent(object):
 
         hard_update(self.critic_target, self.critic)
 
-
         # Actor(Policy) Network Initialization
         if self.automatic_entropy_tuning is True:
             self.target_entropy = - self.action_dim
@@ -72,6 +70,8 @@ class Agent(object):
         self.policy = Policy(network_config, self.action_dim, self.goal_dim).to(self.device)
         self.policy_optim = Adam(self.policy.parameters(), lr=lr_a)
 
+        print(self.critic)
+        print(self.policy)
 
     def action(self, current_state, goal, evaluate=False):
         if current_state.ndim < 4:
@@ -153,4 +153,3 @@ class Agent(object):
                                next_observe=next_state,
                                engage=engage,
                                done=done)
-
