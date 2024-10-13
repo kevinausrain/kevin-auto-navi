@@ -50,7 +50,7 @@ network_config2 = {
     },
     "value": {
         "conv_layer": {
-            "neutron_num": [[4, 64], [64, 256]],
+            "neutron_num": [[4, 16], [16, 32], [32, 64]],
             "kernel_size": 5,
             "stride": 2
         },
@@ -68,7 +68,7 @@ network_config3 = {
         "embed_layer": 32,
         "mean_layer": 128,
         "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 64], [64, 128], [128, 128]],
+        "relu_full_conn_layer": [[32, 64], [64, 64]],
     },
     "value": {
         "conv_layer": {
@@ -76,8 +76,8 @@ network_config3 = {
             "kernel_size": 5,
             "stride": 2
         },
-        "rule_full_conn_layer_1": [[290, 128], [128, 64], [64, 32]],
-        "rule_full_conn_layer_2": [[290, 128], [128, 64], [64, 32]],
+        "rule_full_conn_layer_1": [[290, 128], [128, 64]],
+        "rule_full_conn_layer_2": [[290, 128], [128, 64]],
         "full_conn_layer_1": [[32, 2]],
         "full_conn_layer_2": [[32, 2]],
         "embed_layer": 32
@@ -163,7 +163,7 @@ def set_world_config(world):
     f.close()
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # cuda or cpu
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # cuda or cpu
 
     model_name = 'navi'
 
@@ -223,17 +223,6 @@ if __name__ == "__main__":
 
     for network_config in network_configs:
         for world in worlds:
-            set_world_config(world)
-            env = Environment('/home/drl_nav/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
-
-            time.sleep(5)
-
-            env.seed(seed)
-            initial_state, goal = env.reset()
-            state_dim = initial_state.shape
-            max_action = 1
-
-            # Initialize the agent
             agent = Agent(2, 2, seed, network_config, critic_learn_rate, actor_learn_rate, lr_alpha,
                           buffer_size, soft_update_rate, discount, alpha, block=2,
                           head=4, automatic_entropy_tuning=auto_tune)
@@ -241,6 +230,16 @@ if __name__ == "__main__":
             if pth_name is not None:
                 agent.load(directory="models", filename=pth_name)
                 print('load success')
+
+            set_world_config(world)
+            env = Environment('/home/kevin/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
+
+            time.sleep(5)
+
+            env.seed(seed)
+            initial_state, goal = env.reset()
+            state_dim = initial_state.shape
+            max_action = 1
 
             # Create evaluation data store
             evaluations = []

@@ -37,7 +37,7 @@ class Policy(nn.Module):
 
         mean = self.mean_linear(x)
         log_std = self.log_std_linear(x)
-        std = torch.clamp(log_std, min=2, max=-20).exp()
+        std = torch.clamp(log_std, min=-20, max=2).exp()
 
         return mean, std
 

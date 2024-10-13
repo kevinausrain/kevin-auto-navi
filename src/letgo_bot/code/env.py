@@ -93,7 +93,8 @@ class Environment:
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        self.goal_publisher = rospy.Publisher('goal_marker_array', MarkerArray, queue_size=3)
+        topic1 = "vis_mark_array"
+        self.goal_publisher = rospy.Publisher(topic1, MarkerArray, queue_size=3)
         self.linear_speed_publisher = rospy.Publisher('linear_marker_array', MarkerArray, queue_size=1)
         self.angular_speed_publisher = rospy.Publisher('angular_marker_array', MarkerArray, queue_size=1)
         self.publisher4 = rospy.Publisher('vis_mark_array4', MarkerArray, queue_size=1)

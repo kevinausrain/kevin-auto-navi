@@ -10,6 +10,9 @@
   <xacro:include filename="$(find letgo_bot)/xacro/laser/hokuyo.xacro"/>
   <xacro:laser name="front_laser" parent="base_link" xyz="0.125 0 0.1" rpy="0 0 0" meshes="package://letgo_bot/meshes/laser"/>
 
+  <xacro:include filename="$(find gtrl)/xacro/camera/cameraD.xacro"/>
+  <xacro:camD name="cameraD" parent="base_link" xyz="0.21 0 0.075" rpy="0 0 0" />
+
   <!-- FishEye Camera -->
   <xacro:include filename="$(find letgo_bot)/xacro/camera/cameraFisheye.xacro"/>
   <xacro:camF name="cameraFishEye" parent="base_link" xyz="0.21 0 0.5" rpy="0 0 0" />

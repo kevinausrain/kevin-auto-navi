@@ -1,21 +1,21 @@
 Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
 Change Dir: /home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_2fab6/fast && /usr/bin/make -f CMakeFiles/cmTC_2fab6.dir/build.make CMakeFiles/cmTC_2fab6.dir/build
+Run Build Command(s):/usr/bin/make cmTC_b81bb/fast && /usr/bin/make -f CMakeFiles/cmTC_b81bb.dir/build.make CMakeFiles/cmTC_b81bb.dir/build
 make[1]: Entering directory '/home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_2fab6.dir/src.c.o
-/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_2fab6.dir/src.c.o   -c /home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp/src.c
-Linking C executable cmTC_2fab6
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2fab6.dir/link.txt --verbose=1
-/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD    -rdynamic CMakeFiles/cmTC_2fab6.dir/src.c.o  -o cmTC_2fab6 
-/usr/bin/ld: CMakeFiles/cmTC_2fab6.dir/src.c.o: in function `main':
+Building C object CMakeFiles/cmTC_b81bb.dir/src.c.o
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_b81bb.dir/src.c.o   -c /home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_b81bb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b81bb.dir/link.txt --verbose=1
+/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD    -rdynamic CMakeFiles/cmTC_b81bb.dir/src.c.o  -o cmTC_b81bb 
+/usr/bin/ld: CMakeFiles/cmTC_b81bb.dir/src.c.o: in function `main':
 src.c:(.text+0x48): undefined reference to `pthread_create'
 /usr/bin/ld: src.c:(.text+0x50): undefined reference to `pthread_detach'
 /usr/bin/ld: src.c:(.text+0x5c): undefined reference to `pthread_join'
 collect2: error: ld returned 1 exit status
-make[1]: *** [CMakeFiles/cmTC_2fab6.dir/build.make:87: cmTC_2fab6] Error 1
+make[1]: *** [CMakeFiles/cmTC_b81bb.dir/build.make:87: cmTC_b81bb] Error 1
 make[1]: Leaving directory '/home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp'
-make: *** [Makefile:121: cmTC_2fab6/fast] Error 2
+make: *** [Makefile:121: cmTC_b81bb/fast] Error 2
 
 
 Source file was:
@@ -41,18 +41,18 @@ int main(void)
 Determining if the function pthread_create exists in the pthreads failed with the following output:
 Change Dir: /home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/make cmTC_b5212/fast && /usr/bin/make -f CMakeFiles/cmTC_b5212.dir/build.make CMakeFiles/cmTC_b5212.dir/build
+Run Build Command(s):/usr/bin/make cmTC_d59dd/fast && /usr/bin/make -f CMakeFiles/cmTC_d59dd.dir/build.make CMakeFiles/cmTC_d59dd.dir/build
 make[1]: Entering directory '/home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_b5212.dir/CheckFunctionExists.c.o
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_b5212.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
-Linking C executable cmTC_b5212
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b5212.dir/link.txt --verbose=1
-/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_b5212.dir/CheckFunctionExists.c.o  -o cmTC_b5212  -lpthreads 
+Building C object CMakeFiles/cmTC_d59dd.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_d59dd.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d59dd
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d59dd.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_d59dd.dir/CheckFunctionExists.c.o  -o cmTC_d59dd  -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-make[1]: *** [CMakeFiles/cmTC_b5212.dir/build.make:87: cmTC_b5212] Error 1
+make[1]: *** [CMakeFiles/cmTC_d59dd.dir/build.make:87: cmTC_d59dd] Error 1
 make[1]: Leaving directory '/home/kevin/kevin-auto-navi/build/CMakeFiles/CMakeTmp'
-make: *** [Makefile:121: cmTC_b5212/fast] Error 2
+make: *** [Makefile:121: cmTC_d59dd/fast] Error 2
 
 
 
