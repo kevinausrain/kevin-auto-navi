@@ -13,7 +13,6 @@ class Policy(nn.Module):
         self.fc_embed = nn.Linear(nb_pstate, network_config['policy']['embed_layer'])
         self.relu_fc1 = nn.Linear(network_config['policy']['relu_fc1'][0], network_config['policy']['relu_fc1'][1])
         self.relu_fc2 = nn.Linear(network_config['policy']['relu_fc2'][0], network_config['policy']['relu_fc2'][1])
-        self.relu_fc3 = nn.Linear(network_config['policy']['relu_fc3'][0], network_config['policy']['relu_fc3'][1])
 
         self.mean_linear = nn.Linear(network_config['policy']['mean_layer'], nb_actions)
         self.log_std_linear = nn.Linear(network_config['policy']['log_std_layer'], nb_actions)

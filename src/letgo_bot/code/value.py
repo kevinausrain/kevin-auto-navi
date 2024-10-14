@@ -7,18 +7,18 @@ class Value(nn.Module):
     def __init__(self, network_config, nb_actions, nb_pstate):
         super(Value, self).__init__()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.conv1= nn.Conv2d(network_config['policy']['conv1'][0], network_config['policy']['conv1'][1],
-                              network_config['policy']['conv1'][2], network_config['policy']['conv1'][3])
-        self.conv2 = nn.Conv2d(network_config['policy']['conv2'][0], network_config['policy']['conv2'][1],
-                               network_config['policy']['conv2'][2], network_config['policy']['conv2'][3])
-        self.conv3 = nn.Conv2d(network_config['policy']['conv3'][0], network_config['policy']['conv3'][1],
-                               network_config['policy']['conv3'][2], network_config['policy']['conv3'][3])
-        self.relu_fc10 = nn.Linear(network_config['policy']['relu_fc10'][0], network_config['policy']['relu_fc10'][1])
-        self.relu_fc11 = nn.Linear(network_config['policy']['relu_fc11'][0], network_config['policy']['relu_fc11'][1])
-        self.relu_fc20 = nn.Linear(network_config['policy']['relu_fc20'][0], network_config['policy']['relu_fc20'][1])
-        self.relu_fc21 = nn.Linear(network_config['policy']['relu_fc21'][0], network_config['policy']['relu_fc21'][1])
-        self.fc1 = nn.Linear(network_config['policy']['fc1'][0], network_config['policy']['fc1'][1])
-        self.fc2 = nn.Linear(network_config['policy']['fc2'][0], network_config['policy']['fc2'][1])
+        self.conv1= nn.Conv2d(network_config['value']['conv1'][0], network_config['value']['conv1'][1],
+                              network_config['value']['conv1'][2], network_config['value']['conv1'][3])
+        self.conv2 = nn.Conv2d(network_config['value']['conv2'][0], network_config['value']['conv2'][1],
+                               network_config['value']['conv2'][2], network_config['value']['conv2'][3])
+        self.conv3 = nn.Conv2d(network_config['value']['conv3'][0], network_config['value']['conv3'][1],
+                               network_config['value']['conv3'][2], network_config['value']['conv3'][3])
+        self.relu_fc10 = nn.Linear(network_config['value']['relu_fc10'][0], network_config['value']['relu_fc10'][1])
+        self.relu_fc11 = nn.Linear(network_config['value']['relu_fc11'][0], network_config['value']['relu_fc11'][1])
+        self.relu_fc20 = nn.Linear(network_config['value']['relu_fc20'][0], network_config['value']['relu_fc20'][1])
+        self.relu_fc21 = nn.Linear(network_config['value']['relu_fc21'][0], network_config['value']['relu_fc21'][1])
+        self.fc1 = nn.Linear(network_config['value']['fc1'][0], network_config['value']['fc1'][1])
+        self.fc2 = nn.Linear(network_config['value']['fc2'][0], network_config['value']['fc2'][1])
         self.avg = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self.fc_embed = nn.Linear(nb_pstate, network_config['value']['embed_layer'])
 
