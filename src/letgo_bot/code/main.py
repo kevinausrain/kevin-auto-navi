@@ -24,67 +24,22 @@ network_config1 = {
         "embed_layer": 32,
         "mean_layer": 128,
         "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 128], [128, 128]],
+        "relu_fc1": [32, 128],
+        "relu_fc2": [128, 128],
     },
     "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 16], [16, 64], [64, 256]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "relu_full_conn_layer1": [[290, 128], [128, 32]],
-        "relu_full_conn_layer2": [[290, 128], [128, 32]],
-        "full_conn_layer1": [[32, 2]],
-        "full_conn_layer2": [[32, 2]],
+        "conv1": [4, 16, 5, 2],
+        "conv2": [16, 64, 5, 2],
+        "conv3": [64, 256, 5, 2],
+        "relu_fc10": [290, 128],
+        "relu_fc11": [128, 32],
+        "relu_fc20": [290, 128],
+        "relu_fc21": [128, 32],
+        "fc1": [32, 2],
+        "fc2": [32, 2],
         "embed_layer": 32
     }
 }
-
-network_config2 = {
-    "policy": {
-        "transformer": {"head": 4, "block": 2},
-        "embed_layer": 32,
-        "mean_layer": 128,
-        "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 128], [128, 128]],
-    },
-    "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 16], [16, 32], [32, 64]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "rule_full_conn_layer_1": [[290, 64], [64, 32]],
-        "rule_full_conn_layer_2": [[290, 64], [64, 32]],
-        "full_conn_layer_1": [[32, 2]],
-        "full_conn_layer_2": [[32, 2]],
-        "embed_layer": 32
-    }
-}
-
-network_config3 = {
-    "policy": {
-        "transformer": {"head": 4, "block": 2},
-        "embed_layer": 32,
-        "mean_layer": 128,
-        "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 64], [64, 64]],
-    },
-    "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 16], [16, 64], [64, 256]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "rule_full_conn_layer_1": [[290, 128], [128, 64]],
-        "rule_full_conn_layer_2": [[290, 128], [128, 64]],
-        "full_conn_layer_1": [[32, 2]],
-        "full_conn_layer_2": [[32, 2]],
-        "embed_layer": 32
-    }
-}
-
-
 
 def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=0):
     observations = deque(maxlen=4)

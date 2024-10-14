@@ -210,7 +210,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /vis_mark_array1
+      Marker Topic: /vis_mark_array
       Name: MarkerArray
       Namespaces:
         "": true
