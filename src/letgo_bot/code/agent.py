@@ -70,9 +70,6 @@ class Agent(object):
         self.policy = Policy(network_config, self.action_dim, self.goal_dim).to(self.device)
         self.policy_optim = Adam(self.policy.parameters(), lr=lr_a)
 
-        print(self.critic)
-        print(self.policy)
-
     def action(self, current_state, goal, evaluate=False):
         if current_state.ndim < 4:
             current_state = torch.FloatTensor(current_state).float().unsqueeze(0).permute(0, 3, 1, 2).to(self.device)
