@@ -48,6 +48,4 @@ class Value(nn.Module):
         q2 = F.relu(self.relu_fc21(q2))
         q2 = self.fc2(q2)
 
-        print(q1.shape)
-
         return q1, q2

@@ -93,11 +93,10 @@ class Environment:
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        topic1 = "vis_mark_array"
-        self.goal_publisher = rospy.Publisher(topic1, MarkerArray, queue_size=3)
+        self.goal_publisher = rospy.Publisher('goal_marker_array', MarkerArray, queue_size=3)
         self.linear_speed_publisher = rospy.Publisher('linear_marker_array', MarkerArray, queue_size=1)
         self.angular_speed_publisher = rospy.Publisher('angular_marker_array', MarkerArray, queue_size=1)
-        self.publisher4 = rospy.Publisher('vis_mark_array4', MarkerArray, queue_size=1)
+        self.space_publisher = rospy.Publisher('space_marker_array', MarkerArray, queue_size=1)
 
         # receive sensor (laser/camera/pointcloud) data to observe environment
         self.velodyne = rospy.Subscriber('/velodyne_points', PointCloud2, self.velodyne_callback, queue_size=1)
@@ -227,7 +226,7 @@ class Environment:
         beta2 = util.calculate_beta(self.robot_x, self.robot_y, self.goal_x, self.goal_y, round(quaternion.to_euler(degrees=False)[2], 4))
 
         # Publish visual data in Rviz to display
-        util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.publisher4, act, self.goal_x, self.goal_y)
+        util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.space_publisher, act, self.goal_x, self.goal_y)
 
         # reward calculation
         reward = 0.0

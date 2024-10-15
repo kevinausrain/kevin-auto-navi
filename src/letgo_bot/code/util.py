@@ -77,12 +77,12 @@ def calculate_beta(cur_x, cur_y, goal_x, goal_y, angle):
 
     return beta2
 
-def display_move_in_rviz(goal_publisher, linear_speed_publisher, angular_speed_publisher, publisher4, act, goal_x, goal_y):
+def display_move_in_rviz(goal_publisher, linear_speed_publisher, angular_speed_publisher, space_publisher, act, goal_x, goal_y):
     goal_marker_array = MarkerArray()
     goal_marker = Marker()
     goal_marker.header.frame_id = "odom"
-    goal_marker.type, goal_marker.action = Marker.CYLINDER, Marker.CYLINDER
-    goal_marker.scale.x, goal_marker.scale.y, goal_marker.scale.z = 0.3, 0.01, 1.0
+    goal_marker.type, goal_marker.action = goal_marker.CYLINDER, goal_marker.ADD
+    goal_marker.scale.x, goal_marker.scale.y, goal_marker.scale.z = 0.3, 0.3, 0.01
     goal_marker.color.a, goal_marker.color.r, goal_marker.color.g, goal_marker.color.b = 1.0, 1.0, 1.0, 1.0
     goal_marker.pose.orientation.w = 1.0
     goal_marker.pose.position.x, goal_marker.pose.position.y, goal_marker.pose.position.z = goal_x, goal_y, 0
@@ -112,24 +112,24 @@ def display_move_in_rviz(goal_publisher, linear_speed_publisher, angular_speed_p
     angular_speed_publisher.publish(angular_speed_marker_array)
 
 
-    markerArray4 = MarkerArray()
-    marker4 = Marker()
-    marker4.header.frame_id = "odom"
-    marker4.type = Marker.CUBE
-    marker4.action = Marker.ADD
-    marker4.scale.x = 0.1
-    marker4.scale.y = 0.1
-    marker4.scale.z = 0.01
-    marker4.color.a = 1.0
-    marker4.color.r = 1.0
-    marker4.color.g = 0.0
-    marker4.color.b = 0.0
-    marker4.pose.orientation.w = 1.0
-    marker4.pose.position.x = 5
-    marker4.pose.position.y = 0.4
-    marker4.pose.position.z = 0
+    space_marker_array = MarkerArray()
+    space_marker = Marker()
+    space_marker.header.frame_id = "odom"
+    space_marker.type = Marker.CUBE
+    space_marker.action = Marker.ADD
+    space_marker.scale.x = 0.1
+    space_marker.scale.y = 0.1
+    space_marker.scale.z = 0.01
+    space_marker.color.a = 1.0
+    space_marker.color.r = 1.0
+    space_marker.color.g = 0.0
+    space_marker.color.b = 0.0
+    space_marker.pose.orientation.w = 1.0
+    space_marker.pose.position.x = 5
+    space_marker.pose.position.y = 0.4
+    space_marker.pose.position.z = 0
 
-    markerArray4.markers.append(marker4)
-    publisher4.publish(markerArray4)
+    space_marker_array.markers.append(space_marker)
+    space_publisher.publish(space_marker_array)
 
 

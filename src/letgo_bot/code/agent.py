@@ -113,7 +113,7 @@ class Agent(object):
         qf_loss.backward()
         self.critic_optim.step()
         after = [param.clone() for param in self.critic.parameters()]
-        print('value network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
+        #print('value network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         action, log_prob, _ = self.policy.act(current_state, goal)
 
@@ -126,7 +126,7 @@ class Agent(object):
         policy_loss.backward()
         self.policy_optim.step()
         after = [param.clone() for param in self.policy.parameters()]
-        print('policy network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
+        #print('policy network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
 
