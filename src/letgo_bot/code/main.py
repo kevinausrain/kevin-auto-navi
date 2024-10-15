@@ -141,7 +141,6 @@ if __name__ == "__main__":
     lr_alpha = 1e-4
 
     seed = 525
-    robot = 'navi'
     linear_scalar = 0.5
     angular_scalar = 2
 
