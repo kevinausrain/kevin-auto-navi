@@ -81,7 +81,7 @@ def display_move_in_rviz(goal_publisher, linear_speed_publisher, angular_speed_p
     goal_marker_array = MarkerArray()
     goal_marker = Marker()
     goal_marker.header.frame_id = "odom"
-    goal_marker.type, goal_marker.action = goal_marker.CYLINDER, goal_marker.ADD
+    goal_marker.type, goal_marker.action = Marker.CYLINDER, Marker.ADD
     goal_marker.scale.x, goal_marker.scale.y, goal_marker.scale.z = 0.3, 0.3, 0.01
     goal_marker.color.a, goal_marker.color.r, goal_marker.color.g, goal_marker.color.b = 1.0, 1.0, 1.0, 1.0
     goal_marker.pose.orientation.w = 1.0
