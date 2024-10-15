@@ -105,12 +105,15 @@ class Agent(object):
             next_q_value = reward + self.gamma * (torch.min(qf1_next, qf2_next) - self.alpha * next_state_log_prob)
 
         qf1, qf2 = self.critic(current_state, goal, action)
-        qf1_loss = F.mse_loss(qf1, reward)
+        qf1_loss = F.mse_loss(qf1, next_q_value)
         qf_loss = F.mse_loss(qf1, next_q_value) + F.mse_loss(qf2, next_q_value)
 
         self.critic_optim.zero_grad()
+        before = [param.clone() for param in self.critic.parameters()]
         qf_loss.backward()
         self.critic_optim.step()
+        after = [param.clone() for param in self.critic.parameters()]
+        print('value network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         action, log_prob, _ = self.policy.act(current_state, goal)
 
@@ -119,8 +122,11 @@ class Agent(object):
 
 
         self.policy_optim.zero_grad()
+        before = [param.clone() for param in self.policy.parameters()]
         policy_loss.backward()
         self.policy_optim.step()
+        after = [param.clone() for param in self.policy.parameters()]
+        print('policy network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
 
