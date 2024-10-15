@@ -50,7 +50,7 @@ class Environment:
         self.robot_x, self.robot_y = 0, 0
         self.goal_x, self.goal_y = 1, 1
 
-        self.velodyne_data = np.ones(20) * 10
+        self.vel_data = np.ones(20) * 10
         self.current_laser, self.current_odom, self.current_image_frame = None, None, None
 
         self.collision = 0
@@ -112,7 +112,7 @@ class Environment:
     # Read velodyne pointcloud data and turn it into distance data
     def velodyne_callback(self, v):
         data = list(pc2.read_points(v, skip_nans=False, field_names=("x", "y", "z")))
-        self.velodyne_data = np.ones(20) * 10
+        self.vel_data = np.ones(20) * 10
         for i in range(len(data)):
             if data[i][2] > -0.2:
                 dot = data[i][0] * 1 + data[i][1] * 0
@@ -123,7 +123,7 @@ class Environment:
 
                 for j in range(len(self.gaps)):
                     if self.gaps[j][0] <= beta < self.gaps[j][1]:
-                        self.velodyne_data[j] = min(self.velodyne_data[j], dist)
+                        self.vel_data[j] = min(self.vel_data[j], dist)
                         break
 
     def laser_callback(self, laser):
@@ -205,7 +205,7 @@ class Environment:
 
         # cloud point
         velodyne_state = []
-        velodyne_state[:] = self.velodyne_data[:]
+        velodyne_state[:] = self.vel_data[:]
 
         collision, min_laser = self.detect_collision(current_laser)
 
