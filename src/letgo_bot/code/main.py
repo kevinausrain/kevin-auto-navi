@@ -260,7 +260,7 @@ if __name__ == "__main__":
                         total_timestep += timestep
 
                         if mode == 'test':
-                            txt.writelines("test world: {}, episode: {}, steps: {}. reward: {}\n".format(world, episode, timestep, episode_reward))
+                            txt.writelines("test world: {}, episode: {}, total reward: {}\n".format(world, episode, episode_reward))
 
                         if episode % save_interval == 0:
                             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name),
@@ -295,6 +295,10 @@ if __name__ == "__main__":
                     # Update the counters
                     initial_state = next_state
                     camera_frames.append(camera_frame)
+
+                    if mode == 'test':
+                        txt.writelines("test world: {}, current step: {}. step reward: {}\n".format(world, timestep, reward))
+
             txt.close()
 
             # After the training is done, evaluate the network and save it
