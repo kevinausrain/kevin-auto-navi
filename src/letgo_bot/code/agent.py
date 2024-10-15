@@ -106,7 +106,7 @@ class Agent(object):
 
         qf1, qf2 = self.critic(current_state, goal, action)
         qf1_loss = F.mse_loss(qf1, next_q_value)
-        qf_loss = F.mse_loss(qf1, next_q_value) + F.mse_loss(qf2, next_q_value)
+        qf_loss = qf1_loss + F.mse_loss(qf2, next_q_value)
 
         self.critic_optim.zero_grad()
         before = [param.clone() for param in self.critic.parameters()]
