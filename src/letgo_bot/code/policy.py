@@ -32,7 +32,7 @@ class Policy(nn.Module):
         x = self.trans.forward(x1, x2)
         x = F.relu(self.relu_fc1(x))
         x = F.relu(self.relu_fc2(x))
-        x = F.relu(self.relu_fc3(x))
+
         mean = self.mean_linear(x)
         log_std = self.log_std_linear(x)
         std = torch.clamp(log_std, min=-20, max=2).exp()
