@@ -50,7 +50,7 @@ class Environment:
         self.robot_x, self.robot_y = 0, 0
         self.goal_x, self.goal_y = 1, 1
 
-        self.velodyne_data = np.ones(20) * 10
+        self.vel_data = np.ones(20) * 10
         self.current_laser, self.current_odom, self.current_image_frame = None, None, None
 
         self.collision = 0
@@ -96,7 +96,7 @@ class Environment:
         self.goal_publisher = rospy.Publisher('goal_marker_array', MarkerArray, queue_size=3)
         self.linear_speed_publisher = rospy.Publisher('linear_marker_array', MarkerArray, queue_size=1)
         self.angular_speed_publisher = rospy.Publisher('angular_marker_array', MarkerArray, queue_size=1)
-        self.publisher4 = rospy.Publisher('vis_mark_array4', MarkerArray, queue_size=1)
+        self.space_publisher = rospy.Publisher('space_marker_array', MarkerArray, queue_size=1)
 
         # receive sensor (laser/camera/pointcloud) data to observe environment
         self.velodyne = rospy.Subscriber('/velodyne_points', PointCloud2, self.velodyne_callback, queue_size=1)
@@ -111,7 +111,7 @@ class Environment:
     # Read velodyne pointcloud data and turn it into distance data
     def velodyne_callback(self, v):
         data = list(pc2.read_points(v, skip_nans=False, field_names=("x", "y", "z")))
-        self.velodyne_data = np.ones(20) * 10
+        self.vel_data = np.ones(20) * 10
         for i in range(len(data)):
             if data[i][2] > -0.2:
                 dot = data[i][0] * 1 + data[i][1] * 0
@@ -122,7 +122,7 @@ class Environment:
 
                 for j in range(len(self.gaps)):
                     if self.gaps[j][0] <= beta < self.gaps[j][1]:
-                        self.velodyne_data[j] = min(self.velodyne_data[j], dist)
+                        self.vel_data[j] = min(self.vel_data[j], dist)
                         break
 
     def laser_callback(self, laser):
@@ -204,7 +204,7 @@ class Environment:
 
         # cloud point
         velodyne_state = []
-        velodyne_state[:] = self.velodyne_data[:]
+        velodyne_state[:] = self.vel_data[:]
 
         collision, min_laser = self.detect_collision(current_laser)
 
@@ -226,41 +226,37 @@ class Environment:
         beta2 = util.calculate_beta(self.robot_x, self.robot_y, self.goal_x, self.goal_y, round(quaternion.to_euler(degrees=False)[2], 4))
 
         # Publish visual data in Rviz to display
-        util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.publisher4, act, self.goal_x, self.goal_y)
+        util.display_move_in_rviz(self.goal_publisher, self.linear_speed_publisher, self.angular_speed_publisher, self.space_publisher, act, self.goal_x, self.goal_y)
 
         # reward calculation
-        reward_heuristic = (self.distance - distance) * 20
-        reward_action = act[0] * 2 - abs(act[1])
-        reward_smooth = - abs(act[1] - self.last_act) / 4
+        reward = 0.0
+        reward += (self.distance - distance) * 20
+        reward += act[0] * 2 - abs(act[1])
+        reward += - abs(act[1] - self.last_act) / 4
 
         self.distance = distance
 
-        reward_target = 0.0
         reward_collision = 0.0
-        reward_freeze = 0.0
 
         # Detect if the goal has been reached and give a large positive reward
         if distance < 0.2:
             target = True
             done = True
             self.distance = math.sqrt(math.pow(self.robot_x - self.goal_x, 2) + math.pow(self.robot_y - self.goal_y, 2))
-            reward_target = 100
+            reward += 100
 
         # Detect if ta collision has happened and give a large negative reward
         if collision:
             self.collision += 1
             reward_collision = -100
+            reward += reward_collision
 
-        if timestep > 10 and self.check_move_slow(self.x_pos_list) and self.check_move_slow(self.y_pos_list):
-            reward_freeze = -1
-
-        reward = reward_heuristic + reward_action + reward_collision + reward_target + reward_smooth  # + r_freeze
         beta2 = beta2 / np.pi
         to_goal = np.array([distance, beta2, act[0], act[1]])
 
         state = current_camera_frames / 255
         self.last_act = act[1]
-        return state, reward_heuristic, reward_action, reward_freeze, reward_collision, reward_target, reward, done, to_goal, target
+        return state, reward_collision, reward, done, to_goal, target
 
     def check_move_slow(self, buffer):
         it = iter(buffer)

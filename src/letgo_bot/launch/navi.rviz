@@ -234,7 +234,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: false
-      Marker Topic: /vis_mark_array4
+      Marker Topic: /space_marker_array
       Name: MarkerArray
       Namespaces:
         {}

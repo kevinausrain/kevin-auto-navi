@@ -9,7 +9,6 @@ from util import hard_update, soft_update, set_seed, state_preprocess
 from value import Value
 from policy import Policy
 
-
 # decision-making agent
 class Agent(object):
     def __init__(self, action_dim, goal_dim, seed, network_config,
@@ -62,7 +61,6 @@ class Agent(object):
 
         hard_update(self.critic_target, self.critic)
 
-
         # Actor(Policy) Network Initialization
         if self.automatic_entropy_tuning is True:
             self.target_entropy = - self.action_dim
@@ -71,7 +69,6 @@ class Agent(object):
 
         self.policy = Policy(network_config, self.action_dim, self.goal_dim).to(self.device)
         self.policy_optim = Adam(self.policy.parameters(), lr=lr_a)
-
 
     def action(self, current_state, goal, evaluate=False):
         if current_state.ndim < 4:
@@ -105,12 +102,15 @@ class Agent(object):
             next_q_value = reward + self.gamma * (torch.min(qf1_next, qf2_next) - self.alpha * next_state_log_prob)
 
         qf1, qf2 = self.critic(current_state, goal, action)
-        qf1_loss = F.mse_loss(qf1, reward)
-        qf_loss = F.mse_loss(qf1, next_q_value) + F.mse_loss(qf2, next_q_value)
+        qf1_loss = F.mse_loss(qf1, next_q_value)
+        qf_loss = qf1_loss + F.mse_loss(qf2, next_q_value)
 
         self.critic_optim.zero_grad()
+        before = [param.clone() for param in self.critic.parameters()]
         qf_loss.backward()
         self.critic_optim.step()
+        after = [param.clone() for param in self.critic.parameters()]
+        #print('value network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         action, log_prob, _ = self.policy.act(current_state, goal)
 
@@ -119,8 +119,11 @@ class Agent(object):
 
 
         self.policy_optim.zero_grad()
+        before = [param.clone() for param in self.policy.parameters()]
         policy_loss.backward()
         self.policy_optim.step()
+        after = [param.clone() for param in self.policy.parameters()]
+        #print('policy network changed:', any([not torch.equal(b, a) for a, b in zip(before, after)]))
 
         alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
 
@@ -153,4 +156,3 @@ class Agent(object):
                                next_observe=next_state,
                                engage=engage,
                                done=done)
-

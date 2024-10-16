@@ -24,67 +24,22 @@ network_config1 = {
         "embed_layer": 32,
         "mean_layer": 128,
         "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 128], [128, 128]],
+        "relu_fc1": [32, 128],
+        "relu_fc2": [128, 128],
     },
     "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 16], [16, 64], [64, 256]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "relu_full_conn_layer1": [[290, 128], [128, 32]],
-        "relu_full_conn_layer2": [[290, 128], [128, 32]],
-        "full_conn_layer1": [[32, 2]],
-        "full_conn_layer2": [[32, 2]],
+        "conv1": [4, 16, 5, 2],
+        "conv2": [16, 64, 5, 2],
+        "conv3": [64, 256, 5, 2],
+        "relu_fc10": [290, 128],
+        "relu_fc11": [128, 32],
+        "relu_fc20": [290, 128],
+        "relu_fc21": [128, 32],
+        "fc1": [32, 2],
+        "fc2": [32, 2],
         "embed_layer": 32
     }
 }
-
-network_config2 = {
-    "policy": {
-        "transformer": {"head": 4, "block": 2},
-        "embed_layer": 32,
-        "mean_layer": 128,
-        "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 128], [128, 128]],
-    },
-    "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 64], [64, 256]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "rule_full_conn_layer_1": [[290, 64], [64, 32]],
-        "rule_full_conn_layer_2": [[290, 64], [64, 32]],
-        "full_conn_layer_1": [[32, 2]],
-        "full_conn_layer_2": [[32, 2]],
-        "embed_layer": 32
-    }
-}
-
-network_config3 = {
-    "policy": {
-        "transformer": {"head": 4, "block": 2},
-        "embed_layer": 32,
-        "mean_layer": 128,
-        "log_std_layer": 128,
-        "relu_full_conn_layer": [[32, 64], [64, 128], [128, 128]],
-    },
-    "value": {
-        "conv_layer": {
-            "neutron_num": [[4, 16], [16, 64], [64, 256]],
-            "kernel_size": 5,
-            "stride": 2
-        },
-        "rule_full_conn_layer_1": [[290, 128], [128, 64], [64, 32]],
-        "rule_full_conn_layer_2": [[290, 128], [128, 64], [64, 32]],
-        "full_conn_layer_1": [[32, 2]],
-        "full_conn_layer_2": [[32, 2]],
-        "embed_layer": 32
-    }
-}
-
-
 
 def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=0):
     observations = deque(maxlen=4)
@@ -112,7 +67,7 @@ def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=
             if count == 0:
                 action = network.action(np.array(initial_state), np.array(goal[:2]), evaluate=True).clip(-max_action, max_action)
                 a_in = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
-                obs_, _, _, _, _, _, _, done, goal, target = env.step(a_in, timestep)
+                obs_, _, _, done, goal, target = env.step(a_in, timestep)
                 observation = np.concatenate((obs_, obs_, obs_, obs_), axis=-1)
 
                 for i in range(4):
@@ -129,7 +84,7 @@ def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=
             act = network.action(np.array(observation), np.array(goal[:2]), evaluate=True).clip(-max_action,
                                                                                                        max_action)
             a_in = [(act[0] + 1) * linear_scalar, act[1] * angular_scalar]
-            obs_, _, _, _, _, _, reward, done, goal, target = env.step(a_in, count)
+            obs_, _, reward, done, goal, target = env.step(a_in, count)
             avg_reward += reward
             observation = np.concatenate((observations[-3], observations[-2], observations[-1], obs_), axis=-1)
             observations.append(obs_)
@@ -163,7 +118,7 @@ def set_world_config(world):
     f.close()
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # cuda or cpu
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # cuda or cpu
 
     model_name = 'navi'
 
@@ -186,7 +141,6 @@ if __name__ == "__main__":
     lr_alpha = 1e-4
 
     seed = 525
-    robot = 'navi'
     linear_scalar = 0.5
     angular_scalar = 2
 
@@ -223,17 +177,6 @@ if __name__ == "__main__":
 
     for network_config in network_configs:
         for world in worlds:
-            set_world_config(world)
-            env = Environment('/home/drl_nav/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
-
-            time.sleep(5)
-
-            env.seed(seed)
-            initial_state, goal = env.reset()
-            state_dim = initial_state.shape
-            max_action = 1
-
-            # Initialize the agent
             agent = Agent(2, 2, seed, network_config, critic_learn_rate, actor_learn_rate, lr_alpha,
                           buffer_size, soft_update_rate, discount, alpha, block=2,
                           head=4, automatic_entropy_tuning=auto_tune)
@@ -242,17 +185,22 @@ if __name__ == "__main__":
                 agent.load(directory="models", filename=pth_name)
                 print('load success')
 
+            set_world_config(world)
+            env = Environment('/home/kevin/kevin-auto-navi/src/letgo_bot/launch/main.launch', '11311')
+
+            time.sleep(5)
+
+            env.seed(seed)
+            initial_state, goal = env.reset()
+            state_dim = initial_state.shape
+            max_action = 1
+
             # Create evaluation data store
             evaluations = []
 
             episode = 0
             done = False
             reward_list = []
-            reward_heuristic_list = []
-            reward_action_list = []
-            reward_freeze_list = []
-            reward_target_list = []
-            reward_collision_list = []
             reward_mean_list = []
 
             linear_move_list = []
@@ -271,12 +219,6 @@ if __name__ == "__main__":
             # Begin the training loop
             for i in tqdm(range(0, max_episodes), ascii=True):
                 episode_reward = 0
-                episode_heuristic_reward = 0.0
-                episode_action_reward = 0.0
-                episode_target_reward = 0.0
-                episode_collision_reward = 0.0
-                episode_freeze_reward = 0.0
-
                 camera_frames = deque(maxlen=4)
                 initial_camera_frame, goal = env.reset()
 
@@ -293,7 +235,7 @@ if __name__ == "__main__":
                         action = agent.action(np.array(initial_state), np.array(goal[:2])).clip(-max_action, max_action)
                         action_taken = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
                         last_goal = goal
-                        camera_frame, _, _, _, _, _, reward, done, goal, target = env.step(action_taken, timestep)
+                        camera_frame, _, reward, done, goal, target = env.step(action_taken, timestep)
                         initial_state = np.concatenate((camera_frame, camera_frame, camera_frame, camera_frame), axis=-1)
 
                         for i in range(4):
@@ -312,18 +254,13 @@ if __name__ == "__main__":
 
                         reward_list.append(episode_reward)
                         reward_mean_list.append(np.mean(reward_list[-20:]))
-                        reward_heuristic_list.append(episode_heuristic_reward)
-                        reward_action_list.append(episode_action_reward)
-                        reward_target_list.append(episode_target_reward)
-                        reward_collision_list.append(episode_collision_reward)
-                        reward_freeze_list.append(episode_freeze_reward)
 
                         linear_move_list.clear()
                         angular_move_list.clear()
                         total_timestep += timestep
 
                         if mode == 'test':
-                            txt.writelines("test world: {}, episode: {}, steps: {}. reward: {}\n".format(world, episode, timestep, episode_reward))
+                            txt.writelines("test world: {}, episode: {}, total reward: {}\n".format(world, episode, episode_reward))
 
                         if episode % save_interval == 0:
                             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name),
@@ -339,19 +276,13 @@ if __name__ == "__main__":
                     angular_move_list.append(round(action[1], 2))
 
                     last_goal = goal
-                    camera_frame, r_heuristic, r_action, r_freeze, r_collision, r_target, reward, done, goal, target = env.step(action_taken, timestep)
+                    camera_frame, r_collision, reward, done, goal, target = env.step(action_taken, timestep)
 
                     if r_collision == -100 and timestep >= 50:
                         print("Collision")
                         done = True
 
                     episode_reward += reward
-                    episode_heuristic_reward += r_heuristic
-                    episode_action_reward += r_action
-                    episode_freeze_reward += r_freeze
-                    episode_collision_reward += r_collision
-                    episode_target_reward += r_target
-
                     next_state = np.concatenate((camera_frames[-3], camera_frames[-2], camera_frames[-1], camera_frame), axis=-1)
 
                     # Save states in replay buffer
@@ -364,6 +295,10 @@ if __name__ == "__main__":
                     # Update the counters
                     initial_state = next_state
                     camera_frames.append(camera_frame)
+
+                    if mode == 'test':
+                        txt.writelines("test world: {}, current step: {}. step reward: {}\n".format(world, timestep, reward))
+
             txt.close()
 
             # After the training is done, evaluate the network and save it
@@ -373,9 +308,6 @@ if __name__ == "__main__":
             avg_reward = evaluate(agent, network_config, world, mode, now, eval_ep, episode)
             print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
             evaluations.append(avg_reward)
-
-
-
             print('avg_reward is {}, threshold is {}'.format(avg_reward, save_threshold))
 
             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name), reward_mean_list,

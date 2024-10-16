@@ -443,15 +443,6 @@ gtest_hide_internal_symbols:BOOL=OFF
 //Dependencies for the target
 gtest_main_LIB_DEPENDS:STATIC=general;gtest;
 
-//Value Computed by CMake
-letgo_bot_BINARY_DIR:STATIC=/home/kevin/kevin-auto-navi/build/letgo_bot
-
-//Value Computed by CMake
-letgo_bot_SOURCE_DIR:STATIC=/home/kevin/kevin-auto-navi/src/letgo_bot
-
-//The directory containing a CMake configuration file for xacro.
-xacro_DIR:PATH=/opt/ros/noetic/share/xacro/cmake
-
 
 ########################
 # INTERNAL cache entries
