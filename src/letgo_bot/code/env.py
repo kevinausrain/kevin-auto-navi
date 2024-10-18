@@ -50,7 +50,7 @@ class Environment:
         self.robot_x, self.robot_y = 0, 0
         self.goal_x, self.goal_y = 1, 1
 
-        self.vel_data = np.ones(20) * 10
+        self.velo_data = np.ones(20) * 10
         self.current_laser, self.current_odom, self.current_image_frame = None, None, None
 
         self.collision = 0
@@ -99,30 +99,30 @@ class Environment:
         self.space_publisher = rospy.Publisher('space_marker_array', MarkerArray, queue_size=1)
 
         # receive sensor (laser/camera/pointcloud) data to observe environment
-        self.velodyne = rospy.Subscriber('/velodyne_points', PointCloud2, self.velodyne_callback, queue_size=1)
-        self.laser = rospy.Subscriber('/front_laser/scan', LaserScan, self.laser_callback, queue_size=1)
         self.odom = rospy.Subscriber('/navi/odom', Odometry, self.odom_callback, queue_size=1)
-        self.image_fish = rospy.Subscriber('/camera/fisheye/image_raw', Image, self.image_fish_callback, queue_size=1)
+        self.image = rospy.Subscriber('/camera/fisheye/image_raw', Image, self.camera_callback, queue_size=1)
+        self.velo = rospy.Subscriber('/velodyne_points', PointCloud2, self.velo_callback, queue_size=1)
+        self.laser = rospy.Subscriber('/front_laser/scan', LaserScan, self.laser_callback, queue_size=1)
 
     def seed(self, seed):
         random.seed(seed)
         np.random.seed(seed)
 
     # Read velodyne pointcloud data and turn it into distance data
-    def velodyne_callback(self, v):
+    def velo_callback(self, v):
         data = list(pc2.read_points(v, skip_nans=False, field_names=("x", "y", "z")))
-        self.vel_data = np.ones(20) * 10
+        self.velo_data = np.ones(20) * 10
         for i in range(len(data)):
             if data[i][2] > -0.2:
                 dot = data[i][0] * 1 + data[i][1] * 0
-                mag1 = math.sqrt(math.pow(data[i][0], 2) + math.pow(data[i][1], 2))
-                mag2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
-                beta = math.acos(dot / (mag1 * mag2)) * np.sign(data[i][1])  # * -1
-                dist = math.sqrt(data[i][0] ** 2 + data[i][1] ** 2 + data[i][2] ** 2)
+                magnititude1 = math.sqrt(math.pow(data[i][0], 2) + math.pow(data[i][1], 2))
+                nagnititude2 = math.sqrt(math.pow(1, 2) + math.pow(0, 2))
+                beta = math.acos(dot / (magnititude1 * nagnititude2)) * np.sign(data[i][1])  # * -1
+                distance = math.sqrt(data[i][0] ** 2 + data[i][1] ** 2 + data[i][2] ** 2)
 
                 for j in range(len(self.gaps)):
                     if self.gaps[j][0] <= beta < self.gaps[j][1]:
-                        self.vel_data[j] = min(self.vel_data[j], dist)
+                        self.velo_data[j] = min(self.velo_data[j], distance)
                         break
 
     def laser_callback(self, laser):
@@ -131,7 +131,7 @@ class Environment:
     def odom_callback(self, odom):
         self.current_odom = odom
 
-    def image_fish_callback(self, rgb_data):
+    def camera_callback(self, rgb_data):
         image = self.br.imgmsg_to_cv2(rgb_data, "mono8")
         self.current_image_frame = np.expand_dims(cv2.resize(image[80:400, 140:500], (160, 128)), axis=2)
 
@@ -204,7 +204,7 @@ class Environment:
 
         # cloud point
         velodyne_state = []
-        velodyne_state[:] = self.vel_data[:]
+        velodyne_state[:] = self.velo_data[:]
 
         collision, min_laser = self.detect_collision(current_laser)
 

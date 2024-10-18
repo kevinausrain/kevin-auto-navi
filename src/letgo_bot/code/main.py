@@ -41,71 +41,6 @@ network_config1 = {
     }
 }
 
-def evaluate(network, network_config, world, mode, now, eval_episodes=10, epoch=0):
-    observations = deque(maxlen=4)
-    env.collision = 0
-    ep = 0
-    avg_reward_list = []
-    txt = None
-    if mode == 'test':
-        txt = open ("test_doc/" + str(now) + "-evaluation-" + world + ".txt", "w+")
-        txt.writelines(str(network_config) + "\n")
-
-    while ep < eval_episodes:
-        count = 0
-        obs, goal = env.reset()
-        done = False
-        avg_reward = 0.0
-
-        for i in range(4):
-            observations.append(obs)
-
-        observation = np.concatenate((observations[-4], observations[-3], observations[-2], observations[-1]), axis=-1)
-
-        while not done and count < max_steps:
-
-            if count == 0:
-                action = network.action(np.array(initial_state), np.array(goal[:2]), evaluate=True).clip(-max_action, max_action)
-                a_in = [(action[0] + 1) * linear_scalar, action[1] * angular_scalar]
-                obs_, _, _, done, goal, target = env.step(a_in, timestep)
-                observation = np.concatenate((obs_, obs_, obs_, obs_), axis=-1)
-
-                for i in range(4):
-                    observations.append(obs_)
-
-                if done:
-                    ep -= 1
-                    env.collision -= 1
-                    break
-
-                count += 1
-                continue
-
-            act = network.action(np.array(observation), np.array(goal[:2]), evaluate=True).clip(-max_action,
-                                                                                                       max_action)
-            a_in = [(act[0] + 1) * linear_scalar, act[1] * angular_scalar]
-            obs_, _, reward, done, goal, target = env.step(a_in, count)
-            avg_reward += reward
-            observation = np.concatenate((observations[-3], observations[-2], observations[-1], obs_), axis=-1)
-            observations.append(obs_)
-            count += 1
-
-        ep += 1
-        avg_reward_list.append(avg_reward)
-        print("\n..............................................")
-        print("%i Loop, Steps: %i, Avg Reward: %f, Collision No. : %i " % (ep, count, avg_reward, env.collision))
-        print("..............................................")
-    reward = statistics.mean(avg_reward_list)
-    col = env.collision
-    txt.writelines("average reward {}, over evaluation episodes {}, at epoch {}, collision {}".format(reward, eval_episodes, epoch, col))
-    print("\n..............................................")
-    print("Average Reward over %i Evaluation Episodes, At Epoch: %i, Avg Reward: %f, Collision No.: %i" % (
-    eval_episodes, epoch, reward, col))
-    print("..............................................")
-    txt.close()
-    return reward
-
-
 def set_world_config(world):
     with open(str(os.path.abspath(os.path.dirname(__file__))).replace('/code', '/launch/world.launch'), "r+") as f:
         lines = f.readlines()
@@ -161,7 +96,6 @@ if __name__ == "__main__":
         network_configs.append(network_config1)
     if mode == 'train':
         network_configs.append(network_config1)
-
 
 
     if not os.path.exists("results"):
@@ -303,13 +237,6 @@ if __name__ == "__main__":
 
             # After the training is done, evaluate the network and save it
             agent.save(str(now) + "-" + str(model_name) + "-", directory="models", reward=int(np.floor(1)), seed=seed)
-
-            print('train finish, start evaluate.')
-            avg_reward = evaluate(agent, network_config, world, mode, now, eval_ep, episode)
-            print('evaluate finish. avg reward is {}'.format(str(avg_reward)))
-            evaluations.append(avg_reward)
-            print('avg_reward is {}, threshold is {}'.format(avg_reward, save_threshold))
-
             np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name), reward_mean_list,
                     allow_pickle=True, fix_imports=True)
 
