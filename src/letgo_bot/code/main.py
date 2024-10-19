@@ -97,11 +97,6 @@ if __name__ == "__main__":
     if mode == 'train':
         network_configs.append(network_config1)
 
-
-    if not os.path.exists("results"):
-        os.makedirs("results")
-    if save_models and not os.path.exists("curves"):
-        os.makedirs("curves")
     if save_models and not os.path.exists("models"):
         os.makedirs("models")
     if save_models and not os.path.exists("test_doc"):
@@ -196,10 +191,6 @@ if __name__ == "__main__":
                         if mode == 'test':
                             txt.writelines("test world: {}, episode: {}, total reward: {}\n".format(world, episode, episode_reward))
 
-                        if episode % save_interval == 0:
-                            np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name),
-                                    reward_mean_list, allow_pickle=True, fix_imports=True)
-
                         break
 
 
@@ -237,8 +228,6 @@ if __name__ == "__main__":
 
             # After the training is done, evaluate the network and save it
             agent.save(str(now) + "-" + str(model_name) + "-", directory="models", reward=int(np.floor(1)), seed=seed)
-            np.save(os.path.join('curves', 'reward_seed' + str(seed) + '_' + model_name), reward_mean_list,
-                    allow_pickle=True, fix_imports=True)
 
             try:
                 os.system("killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient python python3 rviz")
