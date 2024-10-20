@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from ViT import VisionTransformer
+from vit import VisionTransformer
 import math
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
