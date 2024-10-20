@@ -46,7 +46,7 @@ def set_world_config(world):
         lines = f.readlines()
 
     f.close()
-    lines[14] = "  <arg name=\"world_name\" value=\"$(find letgo_bot)/world/{}.world\"/>\n".format(world)
+    lines[10] = "  <arg name=\"world_name\" value=\"$(find letgo_bot)/world/{}.world\"/>\n".format(world)
 
     with open(str(os.path.abspath(os.path.dirname(__file__))).replace('/code', '/launch/world.launch'), "w+") as f:
         f.writelines(lines)
