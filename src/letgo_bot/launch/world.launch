@@ -8,11 +8,10 @@
   <arg name="debug" default="false"/>
   <arg name="physics" default="ode"/>
   <arg name="verbose" default="false"/>
-  <arg name="world_name" value="$(find letgo_bot)/world/test.world"/>
   <arg name="respawn_gazebo" default="true"/>
   <arg name="use_clock_frequency" default="false"/>
   <arg name="pub_clock_frequency" default="100"/>
-  <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+  <arg name="world_name" value="$(find letgo_bot)/world/test.world"/>
   <arg unless="$(arg paused)" name="command_arg1" value=""/>
   <arg     if="$(arg paused)" name="command_arg1" value="-u"/>
   <arg unless="$(arg recording)" name="command_arg2" value=""/>
