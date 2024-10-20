@@ -147,7 +147,7 @@ class Agent(object):
         self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
         self.critic_target.load_state_dict(torch.load('%s/%s_critic_target.pth' % (directory, filename)))
 
-    def store_transition(self, state, action, goal, next_goal, reward, next_state, engage, action_expert, done=0):
+    def buffered(self, state, action, goal, next_goal, reward, next_state, engage, action_expert, done=0):
         self.replay_buffer.add(observe=state,
                                act=action if action is not None else action_expert,
                                goal_observe=goal,

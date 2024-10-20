@@ -158,7 +158,6 @@ if __name__ == "__main__":
                 initial_state = np.concatenate((camera_frames[-4], camera_frames[-3], camera_frames[-2], camera_frames[-1]), axis=-1)
 
                 for timestep in range(max_steps):
-                    print(timestep)
                     if timestep == 0:
                         # get action from current state based on agent's policy network
                         action = agent.action(np.array(initial_state), np.array(goal[:2])).clip(-max_action, max_action)
@@ -211,13 +210,12 @@ if __name__ == "__main__":
                     next_state = np.concatenate((camera_frames[-3], camera_frames[-2], camera_frames[-1], camera_frame), axis=-1)
 
                     # Save states in replay buffer
-                    agent.store_transition(initial_state, action, last_goal[:2], goal[:2], reward, next_state, 0, action_exp,
-                                           done)
+                    agent.buffered(initial_state, action, last_goal[:2], goal[:2], reward, next_state, 0, action_exp,
+                                   done)
 
                     # Train the SAC model
                     agent.learn(batch_size)
 
-                    # Update the counters
                     initial_state = next_state
                     camera_frames.append(camera_frame)
 
